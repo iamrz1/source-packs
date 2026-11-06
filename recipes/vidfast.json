@@ -1,0 +1,287 @@
+{
+  "id": "vidfast",
+  "name": "Vidfast",
+  "description": "Resolves HLS streams for vidfast.vc through the two-stage enc-dec.app chain.",
+  "credits": [
+    {
+      "author": "smy778",
+      "project": "EncDecEndpoints",
+      "url": "https://github.com/smy778/EncDecEndpoints",
+      "source": "samples/vidfast.py",
+      "license": "MIT",
+      "note": "The request chain follows the public sample; the crypto is done by the enc-dec.app API from the same author."
+    }
+  ],
+  "vars": {
+    "site": "https://vidfast.vc",
+    "slug": "vidfast",
+    "enc": "https://enc-dec.app/api",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+  },
+  "steps": [
+    {
+      "op": "set",
+      "as": "imdb",
+      "value": "{{id | split:':' | at:0 | prefix:'tt'}}"
+    },
+    {
+      "op": "set",
+      "as": "mediaId",
+      "value": {
+        "$first": [
+          "{{tmdb | digits}}",
+          "{{imdb}}"
+        ]
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{mediaId}}",
+      "msg": "no usable id"
+    },
+    {
+      "op": "set",
+      "as": "path",
+      "value": "/movie/{{mediaId}}/"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "{{id | split:':' | at:1}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "{{id | split:':' | at:2}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{season}}",
+      "msg": "series without season",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{episode}}",
+      "msg": "series without episode",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "path",
+      "value": "/tv/{{mediaId}}/{{season}}/{{episode}}/",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "get",
+      "url": "{{site}}{{path}}",
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "{{site}}/"
+      },
+      "as": "html"
+    },
+    {
+      "op": "extract",
+      "from": "{{html}}",
+      "regex": [
+        "\\\\\"(?:en|token)\\\\\":\\\\\"(.*?)\\\\\"",
+        "\"(?:en|token)\"\\s*:\\s*\"(.*?)\""
+      ],
+      "as": "en"
+    },
+    {
+      "op": "require",
+      "value": "{{en}}",
+      "msg": "no \"en\" token on the page"
+    },
+    {
+      "op": "get",
+      "url": "{{enc}}/enc-{{slug}}",
+      "query": {
+        "text": "{{en}}",
+        "stage": "1"
+      },
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Origin": "{{site}}",
+        "Referer": "{{site}}/"
+      },
+      "response": "json",
+      "as": "s1"
+    },
+    {
+      "op": "require",
+      "value": "{{s1.result.stage1}}",
+      "msg": "enc stage 1 gave no stage1 URL"
+    },
+    {
+      "op": "require",
+      "value": "{{s1.result.token}}",
+      "msg": "enc stage 1 gave no token"
+    },
+    {
+      "op": "post",
+      "url": "{{s1.result.stage1}}",
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Referer": "{{site}}/",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRF-Token": "{{s1.result.token}}"
+      },
+      "as": "reply"
+    },
+    {
+      "op": "get",
+      "url": "{{enc}}/enc-{{slug}}",
+      "query": {
+        "text": "{{reply}}",
+        "stage": "2"
+      },
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Origin": "{{site}}",
+        "Referer": "{{site}}/"
+      },
+      "response": "json",
+      "as": "s2"
+    },
+    {
+      "op": "require",
+      "value": "{{s2.result.servers}}",
+      "msg": "enc stage 2 gave no servers URL"
+    },
+    {
+      "op": "require",
+      "value": "{{s2.result.stream}}",
+      "msg": "enc stage 2 gave no stream URL"
+    },
+    {
+      "op": "require",
+      "value": "{{s2.result.token}}",
+      "msg": "enc stage 2 gave no token"
+    },
+    {
+      "op": "post",
+      "url": "{{s2.result.servers}}",
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Referer": "{{site}}/",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRF-Token": "{{s2.result.token}}"
+      },
+      "as": "serversBlob"
+    },
+    {
+      "op": "post",
+      "url": "{{enc}}/dec-{{slug}}",
+      "body": {
+        "text": "{{serversBlob}}"
+      },
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Origin": "{{site}}",
+        "Referer": "{{site}}/"
+      },
+      "response": "json",
+      "as": "serversDec"
+    },
+    {
+      "op": "set",
+      "as": "servers",
+      "value": "{{serversDec.result | json}}"
+    },
+    {
+      "op": "require",
+      "value": "{{servers}}",
+      "msg": "dec gave no servers"
+    },
+    {
+      "op": "foreach",
+      "in": "{{servers}}",
+      "as": "server",
+      "parallel": true,
+      "retryOnTimeout": 1,
+      "steps": [
+        {
+          "op": "require",
+          "value": "{{server.data}}",
+          "msg": "server has no data"
+        },
+        {
+          "op": "post",
+          "url": "{{s2.result.stream}}/{{server.data}}",
+          "headers": {
+            "User-Agent": "{{ua}}",
+            "Referer": "{{site}}/",
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRF-Token": "{{s2.result.token}}"
+          },
+          "as": "streamBlob"
+        },
+        {
+          "op": "post",
+          "url": "{{enc}}/dec-{{slug}}",
+          "body": {
+            "text": "{{streamBlob}}"
+          },
+          "headers": {
+            "User-Agent": "{{ua}}",
+            "Origin": "{{site}}",
+            "Referer": "{{site}}/"
+          },
+          "response": "json",
+          "as": "streamDec"
+        },
+        {
+          "op": "set",
+          "as": "info",
+          "value": "{{streamDec.result | json}}"
+        },
+        {
+          "op": "require",
+          "value": "{{info.url}}",
+          "msg": "server gave no stream URL"
+        },
+        {
+          "op": "emit",
+          "stream": {
+            "title": {
+              "$join": [
+                "{{server.name}}",
+                "{{server.description}}"
+              ],
+              "sep": " - ",
+              "default": "Vidfast"
+            },
+            "url": "{{info.url}}",
+            "headers": {
+              "User-Agent": "{{ua}}",
+              "Referer": "{{site}}/",
+              "Origin": "{{site}}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

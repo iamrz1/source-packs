@@ -1,0 +1,219 @@
+{
+  "id": "videasy",
+  "name": "Videasy",
+  "description": "Resolves HLS streams with quality labels, and subtitles, from the Videasy API.",
+  "credits": [
+    {
+      "author": "smy778",
+      "project": "EncDecEndpoints",
+      "url": "https://github.com/smy778/EncDecEndpoints",
+      "source": "samples/videasy.py",
+      "license": "MIT",
+      "note": "The request chain follows the public sample; the crypto is done by the enc-dec.app API from the same author."
+    }
+  ],
+  "vars": {
+    "api": "https://api.wecollege.net",
+    "servers": [
+      "miami",
+      "boise"
+    ],
+    "origin": "https://vidy.st",
+    "enc": "https://enc-dec.app/api",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+  },
+  "steps": [
+    {
+      "op": "require",
+      "value": "{{tmdb}}",
+      "msg": "no tmdb id"
+    },
+    {
+      "op": "set",
+      "as": "title",
+      "value": "{{title | trim}}"
+    },
+    {
+      "op": "require",
+      "value": "{{title}}",
+      "msg": "no title"
+    },
+    {
+      "op": "set",
+      "as": "imdb",
+      "value": "{{id | split:':' | at:0 | prefix:'tt'}}"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "{{id | split:':' | at:1}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "{{id | split:':' | at:2}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{season}}",
+      "msg": "series without season",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{episode}}",
+      "msg": "series without episode",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "mediaType",
+      "value": "{{type | map:series=tv}}"
+    },
+    {
+      "op": "get",
+      "url": "{{api}}/seed",
+      "query": {
+        "mediaId": "{{tmdb}}"
+      },
+      "headers": {
+        "Accept": "*/*",
+        "Origin": "{{origin}}",
+        "Referer": "{{origin}}/",
+        "User-Agent": "{{ua}}"
+      },
+      "response": "json",
+      "as": "seedReply"
+    },
+    {
+      "op": "set",
+      "as": "seed",
+      "value": "{{seedReply.seed}}"
+    },
+    {
+      "op": "require",
+      "value": "{{seed}}",
+      "msg": "no seed"
+    },
+    {
+      "op": "tryEach",
+      "in": "{{servers}}",
+      "as": "server",
+      "steps": [
+        {
+          "op": "get",
+          "url": "{{api}}/{{server}}/sources",
+          "query": {
+            "title": "{{title | urlenc}}",
+            "mediaType": "{{mediaType}}",
+            "year": "{{year}}",
+            "episodeId": "{{episode}}",
+            "seasonId": "{{season}}",
+            "tmdbId": "{{tmdb}}",
+            "imdbId": "{{imdb}}",
+            "enc": "2",
+            "seed": "{{seed}}"
+          },
+          "headers": {
+            "Accept": "*/*",
+            "Origin": "{{origin}}",
+            "Referer": "{{origin}}/",
+            "User-Agent": "{{ua}}"
+          },
+          "as": "blob"
+        },
+        {
+          "op": "require",
+          "value": "{{blob | errorJson}}",
+          "equals": false,
+          "msg": "server answered with an error"
+        },
+        {
+          "op": "post",
+          "url": "{{enc}}/dec-videasy",
+          "body": {
+            "text": "{{blob}}",
+            "id": "{{tmdb}}",
+            "seed": "{{seed}}"
+          },
+          "headers": {
+            "Origin": "{{origin}}",
+            "Referer": "{{origin}}/",
+            "User-Agent": "{{ua}}"
+          },
+          "response": "json",
+          "as": "dec"
+        },
+        {
+          "op": "require",
+          "value": "{{dec.status}}",
+          "equals": 200,
+          "msg": "dec-videasy refused the blob"
+        },
+        {
+          "op": "foreach",
+          "in": "{{dec.result.sources}}",
+          "as": "src",
+          "steps": [
+            {
+              "op": "emit",
+              "stream": {
+                "title": "{{server | capitalize}} - Original audio",
+                "url": "{{src.url}}",
+                "height": "{{src.quality | default:'Auto' | height}}",
+                "headers": {
+                  "Referer": "{{origin}}/",
+                  "Origin": "{{origin}}",
+                  "User-Agent": "{{ua}}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op": "foreach",
+          "in": "{{dec.result.subtitles}}",
+          "as": "sub",
+          "steps": [
+            {
+              "op": "set",
+              "as": "lang",
+              "value": {
+                "$first": [
+                  "{{sub.lang}}",
+                  "{{sub.language}}"
+                ]
+              }
+            },
+            {
+              "op": "emit",
+              "subtitle": {
+                "url": "{{sub.url}}",
+                "lang": "{{lang | lower}}",
+                "headers": {
+                  "Referer": "{{origin}}/",
+                  "Origin": "{{origin}}",
+                  "User-Agent": "{{ua}}"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
