@@ -6,7 +6,7 @@ This is a public resource for learning how these request chains work. It is base
 
 ## What is in a pack
 
-`pack.json` holds one recipe per provider (`vidcore`, `vidfast`, `videasy`), the pack `version` and the credits. It is attached to every [release](../../releases), with `pack.json.sha256`.
+`pack.json` holds one recipe per provider (`cinejoy`, `vidcore`, `vidfast`, `videasy`, `vidlink`), the pack `version` and the credits. It is attached to every [release](../../releases), with `pack.json.sha256`.
 
 A recipe is plain JSON: variables and a list of steps (`get`, `post`, `extract`, `foreach`, `emit`, ...). See [docs/RECIPE_SPEC.md](docs/RECIPE_SPEC.md). A recipe only describes requests. Ranking, timeouts and which provider is enabled stay in the app.
 
@@ -29,7 +29,9 @@ You should see `pack.json: OK`.
 
 `inputs` are strings: `type` (`movie` or `series`), `id` (`tt...` or `tt...:season:episode`), `tmdb`, `title`, `year`. A run never throws. It returns the streams, the subtitles, and an `error` when it found nothing. Keep the previous good pack on disk and fall back to code in the app when there is none.
 
-Stream URLs from these sites are bound to the IP that resolved them and expire. Never cache them.
+Stream URLs from these sites expire (VidLink's last about an hour) and some are bound to the IP that resolved them. Never cache them. A stream's `headers` are exactly what the player must send: VidLink's file host rejects any Referer and any browser User-Agent, so its streams carry none, and the player must not add them.
+
+A recipe may set `requires` to the runtime level it needs (`recipeRuntimeLevel`). A runtime that is too old refuses that recipe and runs the others, so check each recipe with `validateRecipe` and keep the valid ones.
 
 ## Change a recipe
 

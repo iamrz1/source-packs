@@ -67,13 +67,21 @@ final Map<String, Filter> filters = {
     }
     return v;
   },
-  // "720p" -> 720, "4K" -> 2160, anything else (Auto, a language) -> null.
+  // "720p" -> 720, "1080" -> 1080, "4K" -> 2160, anything else (Auto, a
+  // language) -> null.
   'height': (v, _) {
     final q = _str(v).trim().toLowerCase();
     if (q == '4k') return 2160;
-    final m = RegExp(r'^(\d+)p$').firstMatch(q);
+    final m = RegExp(r'^(\d+)p?$').firstMatch(q);
     return m == null ? null : int.tryParse(m.group(1)!);
   },
+  // A map as a list of {key, value}, for looping over keyed results.
+  'entries': (v, _) => v is Map
+      ? [
+          for (final e in v.entries)
+            {'key': e.key.toString(), 'value': e.value},
+        ]
+      : const [],
   // A short JSON object with an `error` key, as opposed to a real payload.
   'errorJson': (v, _) {
     final s = _str(v);

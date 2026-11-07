@@ -1,0 +1,146 @@
+{
+  "id": "vidlink",
+  "name": "VidLink",
+  "requires": 2,
+  "description": "Resolves direct MP4 files (360p to 1080p, HEVC) with subtitles from vidlink.pro. The file host rejects any Referer and any browser User-Agent, so the player must send neither.",
+  "credits": [
+    {
+      "author": "smy778",
+      "project": "EncDecEndpoints",
+      "url": "https://github.com/smy778/EncDecEndpoints",
+      "source": "samples/vidlink.py",
+      "license": "MIT",
+      "note": "The request chain follows the public sample; the id is encrypted by the enc-dec.app API from the same author."
+    }
+  ],
+  "vars": {
+    "site": "https://vidlink.pro",
+    "enc": "https://enc-dec.app/api",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+  },
+  "steps": [
+    {
+      "op": "set",
+      "as": "tmdbId",
+      "value": "{{tmdb | digits}}"
+    },
+    {
+      "op": "require",
+      "value": "{{tmdbId}}",
+      "msg": "no tmdb id"
+    },
+    {
+      "op": "set",
+      "as": "imdb",
+      "value": "{{id | split:':' | at:0 | prefix:'tt'}}"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "{{id | split:':' | at:1}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "{{id | split:':' | at:2}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{season}}",
+      "msg": "series without season",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{episode}}",
+      "msg": "series without episode",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "get",
+      "url": "{{enc}}/enc-vidlink",
+      "query": {
+        "text": "{{tmdbId}}"
+      },
+      "headers": {
+        "User-Agent": "{{ua}}"
+      },
+      "response": "json",
+      "as": "e"
+    },
+    {
+      "op": "require",
+      "value": "{{e.result}}",
+      "msg": "enc-vidlink gave no id"
+    },
+    {
+      "op": "set",
+      "as": "path",
+      "value": "/api/b/movie/{{e.result}}"
+    },
+    {
+      "op": "set",
+      "as": "path",
+      "value": "/api/b/tv/{{e.result}}/{{season}}/{{episode}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "get",
+      "url": "{{site}}{{path}}",
+      "response": "json",
+      "as": "r"
+    },
+    {
+      "op": "require",
+      "value": "{{r.stream.qualities}}",
+      "msg": "vidlink returned no streams"
+    },
+    {
+      "op": "foreach",
+      "in": "{{r.stream.qualities | entries}}",
+      "as": "q",
+      "steps": [
+        {
+          "op": "emit",
+          "stream": {
+            "title": "VidLink - Original audio",
+            "url": "{{q.value.url}}",
+            "height": "{{q.key | height}}",
+            "headers": {}
+          }
+        }
+      ]
+    },
+    {
+      "op": "foreach",
+      "in": "{{r.stream.captions}}",
+      "as": "c",
+      "steps": [
+        {
+          "op": "emit",
+          "subtitle": {
+            "url": "{{c.url}}",
+            "lang": "{{c.language | lower}}"
+          }
+        }
+      ]
+    }
+  ]
+}
