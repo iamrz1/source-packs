@@ -34,6 +34,11 @@ class _Out {
 
 typedef RecipeLog = void Function(String message);
 
+/// What this interpreter can run. A recipe that sets `requires` higher than
+/// this is refused cleanly instead of running wrongly. Level 2 added the
+/// `entries` filter, `bodyEncoding` and the `base64url` response.
+const recipeRuntimeLevel = 2;
+
 /// Runs a recipe: a list of steps over a set of variables. See
 /// docs/RECIPE_SPEC.md for the steps.
 class RecipeInterpreter {
@@ -56,6 +61,13 @@ class RecipeInterpreter {
     Map<String, dynamic> inputs,
   ) async {
     final id = recipe['id']?.toString() ?? '?';
+    final needs = recipe['requires'];
+    if (needs is int && needs > recipeRuntimeLevel) {
+      final message =
+          'needs runtime level $needs (this one is $recipeRuntimeLevel)';
+      log('$id: $message');
+      return RecipeResult(error: message);
+    }
     final scope = Scope({
       ...((recipe['vars'] as Map?)?.cast<String, dynamic>() ?? const {}),
       ...inputs,
@@ -159,9 +171,12 @@ class RecipeInterpreter {
       }
     }
     String? body;
+    List<int>? bodyBytes;
     if (step.containsKey('body')) {
       final value = evalValue(step['body'], scope);
-      if (value is Map || value is List) {
+      if (step['bodyEncoding'] == 'base64url' && value != null) {
+        bodyBytes = _base64UrlDecode('$value');
+      } else if (value is Map || value is List) {
         body = jsonEncode(value);
         headers.putIfAbsent('Content-Type', () => 'application/json');
       } else if (value != null) {
@@ -169,13 +184,17 @@ class RecipeInterpreter {
       }
     }
     final response = await http
-        .send(method, url, headers: headers, body: body)
+        .send(method, url, headers: headers, body: body, bodyBytes: bodyBytes)
         .timeout(hopTimeout);
     if (!response.ok) {
       throw StepFailure('$method ${_shorten(url)} -> HTTP ${response.status}');
     }
     dynamic result = response.body;
-    if (step['response'] == 'json') {
+    if (step['response'] == 'base64url') {
+      result = base64Url
+          .encode(response.bytes ?? utf8.encode(response.body))
+          .replaceAll('=', '');
+    } else if (step['response'] == 'json') {
       try {
         result = jsonDecode(response.body);
       } catch (_) {
@@ -184,6 +203,14 @@ class RecipeInterpreter {
     }
     final name = step['as'];
     if (name is String) scope.set(name, result);
+  }
+
+  static List<int> _base64UrlDecode(String text) {
+    try {
+      return base64Url.decode(base64Url.normalize(text));
+    } on FormatException {
+      throw const StepFailure('body is not base64url');
+    }
   }
 
   String _shorten(String url) {

@@ -9,7 +9,8 @@ class Seen {
   final Uri url;
   final Map<String, String> headers;
   final String? body;
-  Seen(this.method, this.url, this.headers, this.body);
+  final List<int>? bodyBytes;
+  Seen(this.method, this.url, this.headers, this.body, [this.bodyBytes]);
 
   Map<String, dynamic> get json => jsonDecode(body ?? '{}');
 }
@@ -27,8 +28,9 @@ class FakeHttp implements RecipeHttp {
     String url, {
     Map<String, String> headers = const {},
     String? body,
+    List<int>? bodyBytes,
   }) async {
-    final request = Seen(method, Uri.parse(url), headers, body);
+    final request = Seen(method, Uri.parse(url), headers, body, bodyBytes);
     seen.add(request);
     return handler(request);
   }

@@ -92,8 +92,8 @@ void main() {
       expect(pack['schema'], packSchema);
       expect(pack['version'], '1.2.3');
       expect(pack['published'], '2026-11-07T12:00:00.000Z');
-      expect(
-          (pack['providers'] as Map).keys, ['vidcore', 'videasy', 'vidfast']);
+      expect((pack['providers'] as Map).keys,
+          ['cinejoy', 'vidcore', 'videasy', 'vidfast', 'vidlink']);
       expect(pack['credits'], hasLength(1));
       expect((pack['credits'] as List).single['author'], 'smy778');
     });
@@ -112,7 +112,8 @@ void main() {
       final pack = Pack.parse(bytes);
 
       expect(pack.version, '1.2.3');
-      expect(pack.providers.keys, ['vidcore', 'videasy', 'vidfast']);
+      expect(pack.providers.keys,
+          ['cinejoy', 'vidcore', 'videasy', 'vidfast', 'vidlink']);
       expect(pack.published, published);
     });
 

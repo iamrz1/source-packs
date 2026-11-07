@@ -1,0 +1,232 @@
+{
+  "id": "cinejoy",
+  "name": "Cinejoy",
+  "requires": 2,
+  "description": "Resolves HLS streams from cinejoy.pk's servers (one stream per working server, one on 4K) with subtitles.",
+  "credits": [
+    {
+      "author": "smy778",
+      "project": "EncDecEndpoints",
+      "url": "https://github.com/smy778/EncDecEndpoints",
+      "source": "samples/cinejoy.py",
+      "license": "MIT",
+      "note": "The request chain follows the public sample; the request and the reply are encrypted by the enc-dec.app API from the same author."
+    }
+  ],
+  "vars": {
+    "site": "https://cinejoy.pk",
+    "api": "https://api.wing.st",
+    "enc": "https://enc-dec.app/api",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+  },
+  "steps": [
+    {
+      "op": "set",
+      "as": "tmdbId",
+      "value": "{{tmdb | digits}}"
+    },
+    {
+      "op": "require",
+      "value": "{{tmdbId}}",
+      "msg": "no tmdb id"
+    },
+    {
+      "op": "set",
+      "as": "imdb",
+      "value": "{{id | split:':' | at:0 | prefix:'tt'}}"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "{{id | split:':' | at:1}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "{{id | split:':' | at:2}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{season}}",
+      "msg": "series without season",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{episode}}",
+      "msg": "series without episode",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "title",
+      "value": "{{title | trim}}"
+    },
+    {
+      "op": "require",
+      "value": "{{title}}",
+      "msg": "no title"
+    },
+    {
+      "op": "get",
+      "url": "{{api}}/servers",
+      "headers": {
+        "Accept": "*/*",
+        "Origin": "{{site}}",
+        "Referer": "{{site}}/",
+        "User-Agent": "{{ua}}"
+      },
+      "response": "json",
+      "as": "list"
+    },
+    {
+      "op": "set",
+      "as": "servers",
+      "value": "{{list.servers}}"
+    },
+    {
+      "op": "require",
+      "value": "{{servers}}",
+      "msg": "cinejoy listed no servers"
+    },
+    {
+      "op": "foreach",
+      "in": "{{servers}}",
+      "as": "server",
+      "parallel": true,
+      "retryOnTimeout": 1,
+      "steps": [
+        {
+          "op": "require",
+          "value": "{{server.name}}",
+          "msg": "server has no name"
+        },
+        {
+          "op": "set",
+          "as": "target",
+          "value": "{{api}}/?title={{title | urlenc}}&type={{type}}&year={{year}}&imdb={{imdb}}&tmdb={{tmdbId}}&server={{server.name | urlenc}}"
+        },
+        {
+          "op": "set",
+          "as": "target",
+          "value": "{{target}}&season={{season}}&episode={{episode}}",
+          "when": {
+            "value": "{{type}}",
+            "equals": "series"
+          }
+        },
+        {
+          "op": "get",
+          "url": "{{enc}}/enc-cinejoy",
+          "query": {
+            "url": "{{target}}"
+          },
+          "headers": {
+            "User-Agent": "{{ua}}"
+          },
+          "response": "json",
+          "as": "sealed"
+        },
+        {
+          "op": "require",
+          "value": "{{sealed.result.data}}",
+          "msg": "enc-cinejoy gave no data"
+        },
+        {
+          "op": "require",
+          "value": "{{sealed.result.state}}",
+          "msg": "enc-cinejoy gave no state"
+        },
+        {
+          "op": "post",
+          "url": "{{api}}/g",
+          "body": "{{sealed.result.data}}",
+          "bodyEncoding": "base64url",
+          "headers": {
+            "Accept": "*/*",
+            "Origin": "{{site}}",
+            "Referer": "{{site}}/",
+            "User-Agent": "{{ua}}"
+          },
+          "response": "base64url",
+          "as": "blob"
+        },
+        {
+          "op": "post",
+          "url": "{{enc}}/dec-cinejoy",
+          "body": {
+            "text": "{{blob}}",
+            "state": "{{sealed.result.state}}"
+          },
+          "headers": {
+            "User-Agent": "{{ua}}"
+          },
+          "response": "json",
+          "as": "dec"
+        },
+        {
+          "op": "foreach",
+          "in": "{{dec.result.data.stream}}",
+          "as": "st",
+          "steps": [
+            {
+              "op": "get",
+              "url": "{{st.playlist}}",
+              "headers": {
+                "Referer": "{{site}}/",
+                "Origin": "{{site}}",
+                "User-Agent": "{{ua}}"
+              },
+              "as": "checked"
+            },
+            {
+              "op": "emit",
+              "stream": {
+                "title": "Cinejoy {{server.name}}",
+                "url": "{{st.playlist}}",
+                "headers": {
+                  "Referer": "{{site}}/",
+                  "Origin": "{{site}}",
+                  "User-Agent": "{{ua}}"
+                }
+              }
+            },
+            {
+              "op": "foreach",
+              "in": "{{st.captions}}",
+              "as": "c",
+              "steps": [
+                {
+                  "op": "emit",
+                  "subtitle": {
+                    "url": "{{c.url}}",
+                    "lang": "{{c.language | lower}}",
+                    "headers": {
+                      "Referer": "{{site}}/",
+                      "Origin": "{{site}}",
+                      "User-Agent": "{{ua}}"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

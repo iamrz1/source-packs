@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'interpreter.dart' show recipeRuntimeLevel;
 import 'template.dart';
 
 /// Version of the pack layout. An app that reads a higher `schema` than it
@@ -44,6 +45,14 @@ List<String> validateRecipe(Map<String, dynamic> recipe) {
   } else {
     _validateSteps(steps, 'steps', problems);
   }
+  final needs = recipe['requires'];
+  if (needs != null && (needs is! int || needs < 1)) {
+    problems.add('requires must be a whole number from 1');
+  } else if (needs is int && needs > recipeRuntimeLevel) {
+    problems.add(
+      'needs runtime level $needs, this one is $recipeRuntimeLevel',
+    );
+  }
   problems.addAll(checkTemplates(recipe['vars']));
   return problems;
 }
@@ -86,6 +95,15 @@ void _validateSteps(List steps, String where, List<String> problems) {
       case 'get':
       case 'post':
         need('url');
+        final response = step['response'];
+        if (response != null &&
+            !const {'text', 'json', 'base64url'}.contains(response)) {
+          problems.add('$at ($op): unknown response "$response"');
+        }
+        final encoding = step['bodyEncoding'];
+        if (encoding != null && encoding != 'base64url') {
+          problems.add('$at ($op): unknown bodyEncoding "$encoding"');
+        }
       case 'foreach':
       case 'tryEach':
         need('in');
