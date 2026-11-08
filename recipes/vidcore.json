@@ -135,11 +135,6 @@
       "msg": "enc stage 1 gave no stage1 URL"
     },
     {
-      "op": "require",
-      "value": "{{s1.result.token}}",
-      "msg": "enc stage 1 gave no token"
-    },
-    {
       "op": "post",
       "url": "{{s1.result.stage1}}",
       "headers": {
@@ -174,11 +169,6 @@
       "op": "require",
       "value": "{{s2.result.stream}}",
       "msg": "enc stage 2 gave no stream URL"
-    },
-    {
-      "op": "require",
-      "value": "{{s2.result.token}}",
-      "msg": "enc stage 2 gave no token"
     },
     {
       "op": "post",
