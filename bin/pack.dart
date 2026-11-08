@@ -32,7 +32,14 @@ String? _option(List<String> args, String name) {
   return i >= 0 && i + 1 < args.length ? args[i + 1] : null;
 }
 
-Future<int> main(List<String> args) async {
+/// The return value of `main` is ignored by the Dart VM, so the exit code is
+/// set explicitly. Without it every failure, including a provider that stopped
+/// working, exited 0 and the live check never opened its issue.
+Future<void> main(List<String> args) async {
+  exitCode = await _run(args);
+}
+
+Future<int> _run(List<String> args) async {
   if (args.isEmpty) {
     stderr.write(_usage);
     return 64;
