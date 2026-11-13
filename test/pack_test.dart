@@ -23,10 +23,12 @@ void main() {
     test('each credits where its steps come from', () {
       for (final r in recipes()) {
         final credits = (r['credits'] as List).cast<Map>();
-        expect(credits.map((c) => c['author']), contains('smy778'),
-            reason: '${r['id']}');
         expect(
-            credits.first['url'], 'https://github.com/smy778/EncDecEndpoints');
+            credits.first['url'],
+            r['id'] == 'moviebox'
+                ? 'https://github.com/faisaljs/Moviebox-API'
+                : 'https://github.com/smy778/EncDecEndpoints',
+            reason: '${r['id']}');
       }
     });
 
@@ -93,9 +95,9 @@ void main() {
       expect(pack['version'], '1.2.3');
       expect(pack['published'], '2026-11-07T12:00:00.000Z');
       expect((pack['providers'] as Map).keys,
-          ['cinejoy', 'vidcore', 'videasy', 'vidfast', 'vidlink']);
-      expect(pack['credits'], hasLength(1));
-      expect((pack['credits'] as List).single['author'], 'smy778');
+          ['cinejoy', 'moviebox', 'vidcore', 'videasy', 'vidfast', 'vidlink']);
+      expect((pack['credits'] as List).map((c) => c['author']),
+          ['smy778', 'faisaljs']);
     });
 
     test('is the same bytes every time', () {
@@ -113,7 +115,7 @@ void main() {
 
       expect(pack.version, '1.2.3');
       expect(pack.providers.keys,
-          ['cinejoy', 'vidcore', 'videasy', 'vidfast', 'vidlink']);
+          ['cinejoy', 'moviebox', 'vidcore', 'videasy', 'vidfast', 'vidlink']);
       expect(pack.published, published);
     });
 

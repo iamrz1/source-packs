@@ -118,7 +118,9 @@ Future<int> _live() async {
   };
   var failed = 0;
   for (final recipe in _recipes()) {
-    for (final sample in samples.entries) {
+    // A recipe for a site with its own catalog may name titles that exist there.
+    final own = (recipe['liveSamples'] as Map?)?.cast<String, dynamic>();
+    for (final sample in (own ?? samples).entries) {
       final lines = <String>[];
       final result = await RecipeInterpreter(
         PackageHttp(),

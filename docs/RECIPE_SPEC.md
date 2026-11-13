@@ -13,7 +13,7 @@ A recipe is a JSON object:
 }
 ```
 
-`id` is lower case and names the file. `requires` (optional) is the runtime level the recipe needs; a runtime with a lower `recipeRuntimeLevel` refuses the recipe. Level 2 added the `entries` filter, `bodyEncoding` and the `base64url` response. Level 3 added `headersAs`. `credits` is required: say where the steps come from. `vars` are visible to every step. The app adds its inputs (`type`, `id`, `tmdb`, `title`, `year`, ...) on top.
+`id` is lower case and names the file. `requires` (optional) is the runtime level the recipe needs; a runtime with a lower `recipeRuntimeLevel` refuses the recipe. Level 2 added the `entries` filter, `bodyEncoding` and the `base64url` response. Level 3 added `headersAs`. `credits` is required: say where the steps come from. `liveSamples` (optional) replaces the sample movie and episode that `dart run bin/pack.dart live` runs, for a site that only has some titles. `vars` are visible to every step. The app adds its inputs (`type`, `id`, `tmdb`, `title`, `year`, ...) on top.
 
 ## Values
 

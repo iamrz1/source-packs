@@ -1,0 +1,362 @@
+{
+  "id": "moviebox",
+  "name": "MovieBox",
+  "requires": 3,
+  "description": "Resolves MP4 streams in English with quality labels, and subtitles, from MovieBox. Finds the title by search, so it only works for titles in the MovieBox catalog.",
+  "credits": [
+    {
+      "author": "faisaljs",
+      "project": "Moviebox-API",
+      "url": "https://github.com/faisaljs/Moviebox-API",
+      "source": "routes/stream.py, upstream.py, config.py",
+      "license": "MIT",
+      "note": "The request chain and the player headers follow this wrapper around the public MovieBox web API. It uses a guest token that the site issues on its first request."
+    }
+  ],
+  "liveSamples": {
+    "movie": {
+      "type": "movie",
+      "id": "tt0468569",
+      "tmdb": "155",
+      "title": "The Dark Knight",
+      "year": "2008"
+    },
+    "episode": {
+      "type": "series",
+      "id": "tt2861424:1:1",
+      "tmdb": "60625",
+      "title": "Rick and Morty",
+      "year": "2013"
+    }
+  },
+  "vars": {
+    "api": "https://h5-api.aoneroom.com/wefeed-h5api-bff",
+    "host": "moviebox.ph",
+    "site": "https://moviebox.ph",
+    "clientInfo": "{\"timezone\":\"Asia/Dhaka\"}",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  },
+  "steps": [
+    {
+      "op": "set",
+      "as": "title",
+      "value": "{{title | trim}}"
+    },
+    {
+      "op": "require",
+      "value": "{{title}}",
+      "msg": "no title"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "0"
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "0"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "{{id | split:':' | at:1}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "{{id | split:':' | at:2}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{season}}",
+      "msg": "series without season",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{episode}}",
+      "msg": "series without episode",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "typeCode",
+      "value": "{{type | map:series=2,movie=1}}"
+    },
+    {
+      "op": "set",
+      "as": "want",
+      "value": "{{title | lower}}"
+    },
+    {
+      "op": "set",
+      "as": "wantYear",
+      "value": "{{year | digits}}"
+    },
+    {
+      "op": "get",
+      "url": "{{api}}/home",
+      "query": {
+        "host": "{{host}}"
+      },
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Referer": "{{site}}/"
+      },
+      "headersAs": "homeHeaders"
+    },
+    {
+      "op": "set",
+      "as": "guest",
+      "value": "{{homeHeaders.x-user | json}}"
+    },
+    {
+      "op": "set",
+      "as": "token",
+      "value": "{{guest.token}}"
+    },
+    {
+      "op": "require",
+      "value": "{{token}}",
+      "msg": "no guest token"
+    },
+    {
+      "op": "get",
+      "url": "{{api}}/media-player/get-domain",
+      "query": {
+        "host": "{{host}}"
+      },
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Referer": "{{site}}",
+        "Origin": "{{site}}",
+        "X-Client-Info": "{{clientInfo}}",
+        "X-Request-Lang": "en",
+        "Accept": "application/json",
+        "Authorization": "Bearer {{token}}"
+      },
+      "response": "json",
+      "as": "domainReply"
+    },
+    {
+      "op": "extract",
+      "from": "{{domainReply.data}}",
+      "regex": "^(https?://[^/]+)",
+      "as": "domain"
+    },
+    {
+      "op": "require",
+      "value": "{{domain}}",
+      "msg": "no player domain"
+    },
+    {
+      "op": "post",
+      "url": "{{api}}/subject/search?host={{host}}",
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Referer": "{{site}}",
+        "Origin": "{{site}}",
+        "X-Client-Info": "{{clientInfo}}",
+        "X-Request-Lang": "en",
+        "Accept": "application/json",
+        "Authorization": "Bearer {{token}}"
+      },
+      "body": {
+        "keyword": "{{title}}",
+        "page": 1,
+        "perPage": 20,
+        "subjectType": 1
+      },
+      "response": "json",
+      "as": "found",
+      "when": {
+        "value": "{{type}}",
+        "equals": "movie"
+      }
+    },
+    {
+      "op": "post",
+      "url": "{{api}}/subject/search?host={{host}}",
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Referer": "{{site}}",
+        "Origin": "{{site}}",
+        "X-Client-Info": "{{clientInfo}}",
+        "X-Request-Lang": "en",
+        "Accept": "application/json",
+        "Authorization": "Bearer {{token}}"
+      },
+      "body": {
+        "keyword": "{{title}}",
+        "page": 1,
+        "perPage": 20,
+        "subjectType": 2
+      },
+      "response": "json",
+      "as": "found",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{found.data.items}}",
+      "msg": "search found nothing"
+    },
+    {
+      "op": "tryEach",
+      "in": "{{found.data.items}}",
+      "as": "hit",
+      "steps": [
+        {
+          "op": "require",
+          "value": "{{hit.hasResource}}",
+          "msg": "hit has no stream"
+        },
+        {
+          "op": "require",
+          "value": "{{hit.subjectType}}",
+          "equals": "{{typeCode}}",
+          "msg": "hit is the other type"
+        },
+        {
+          "op": "extract",
+          "from": "{{hit.title}}",
+          "regex": [
+            "^(.*?)\\s+S\\d+(?:-S\\d+)?$",
+            "^(.*)$"
+          ],
+          "as": "name"
+        },
+        {
+          "op": "require",
+          "value": "{{name | lower | trim}}",
+          "equals": "{{want}}",
+          "msg": "hit has another title"
+        },
+        {
+          "op": "require",
+          "value": "{{hit.releaseDate | split:'-' | at:0}}",
+          "equals": "{{wantYear}}",
+          "msg": "hit is from another year",
+          "when": {
+            "value": "{{wantYear}}"
+          }
+        },
+        {
+          "op": "set",
+          "as": "referer",
+          "value": "{{domain}}/spa/videoPlayPage/movies/{{hit.detailPath}}?id={{hit.subjectId}}&type=/movie/detail&detailSe={{season}}&detailEp={{episode}}&lang=en"
+        },
+        {
+          "op": "get",
+          "url": "{{api}}/subject/play",
+          "query": {
+            "subjectId": "{{hit.subjectId}}",
+            "se": "{{season}}",
+            "ep": "{{episode}}",
+            "detailPath": "{{hit.detailPath}}",
+            "host": "{{host}}"
+          },
+          "headers": {
+            "User-Agent": "{{ua}}",
+            "Referer": "{{referer}}",
+            "Authorization": "Bearer {{token}}"
+          },
+          "response": "json",
+          "as": "play"
+        },
+        {
+          "op": "require",
+          "value": "{{play.data.streams}}",
+          "msg": "no streams for this episode"
+        },
+        {
+          "op": "foreach",
+          "in": "{{play.data.streams}}",
+          "as": "src",
+          "steps": [
+            {
+              "op": "emit",
+              "stream": {
+                "title": "{{src.resolutions}}p MP4",
+                "url": "{{src.url}}",
+                "height": "{{src.resolutions | height}}",
+                "headers": {
+                  "User-Agent": "{{ua}}",
+                  "Accept": "*/*",
+                  "Accept-Language": "en-US,en;q=0.9",
+                  "X-Client-Info": "{{clientInfo}}",
+                  "sec-ch-ua": "\"Chromium\";v=\"148\", \"Google Chrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+                  "sec-ch-ua-mobile": "?0",
+                  "sec-ch-ua-platform": "\"Windows\"",
+                  "sec-fetch-dest": "empty",
+                  "sec-fetch-mode": "cors",
+                  "sec-fetch-site": "same-origin",
+                  "Referer": "{{referer}}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "op": "foreach",
+          "in": [
+            "{{play.data.streams.0.id}}"
+          ],
+          "as": "streamId",
+          "steps": [
+            {
+              "op": "get",
+              "url": "{{api}}/subject/caption",
+              "query": {
+                "format": "MP4",
+                "id": "{{streamId}}",
+                "subjectId": "{{hit.subjectId}}",
+                "detailPath": "{{hit.detailPath}}",
+                "host": "{{host}}"
+              },
+              "headers": {
+                "User-Agent": "{{ua}}",
+                "Referer": "{{referer}}",
+                "Authorization": "Bearer {{token}}"
+              },
+              "response": "json",
+              "as": "caps"
+            },
+            {
+              "op": "foreach",
+              "in": "{{caps.data.captions}}",
+              "as": "cap",
+              "steps": [
+                {
+                  "op": "emit",
+                  "subtitle": {
+                    "url": "{{cap.url}}",
+                    "lang": "{{cap.lan | lower}}"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
