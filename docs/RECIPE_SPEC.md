@@ -7,6 +7,8 @@ A recipe is a JSON object:
   "id": "videasy",
   "name": "Videasy",
   "description": "...",
+  "rank": 70,
+  "defaultEnabled": false,
   "credits": [{ "author": "...", "project": "...", "url": "...", "source": "...", "license": "..." }],
   "vars": { "api": "https://...", "servers": ["a", "b"] },
   "steps": [ ... ]
@@ -14,6 +16,21 @@ A recipe is a JSON object:
 ```
 
 `id` is lower case and names the file. `requires` (optional) is the runtime level the recipe needs; a runtime with a lower `recipeRuntimeLevel` refuses the recipe. Level 2 added the `entries` filter, `bodyEncoding` and the `base64url` response. Level 3 added `headersAs`. `credits` is required: say where the steps come from. `liveSamples` (optional) replaces the sample movie and episode that `dart run bin/pack.dart live` runs, for a site that only has some titles. `vars` are visible to every step. The app adds its inputs (`type`, `id`, `tmdb`, `title`, `year`, ...) on top.
+
+## Metadata
+
+An app lists its sources from the recipes, so it needs no code per source. Four fields describe a recipe to the user:
+
+- `name`: what the list shows.
+- `description` (optional): one plain sentence under the name.
+- `rank` (optional, a whole number): the default order. Lower comes first. A recipe without one comes after every ranked one, ordered by id.
+- `defaultEnabled` (optional, true or false): whether the source starts on. Default `true`. The user can switch it either way; a choice the user made is never overwritten by the pack.
+
+`Pack.infos` returns these as `RecipeInfo` objects, already sorted by `rank`, then id.
+
+Ranks share one scale with the sources an app builds in. Built-in sources take 10 (Torrentio with Real-Debrid), 20 (VixSrc) and 90 (NoTorrent). Recipes start at 30 and go up in steps of 10, so a new recipe fits between two others without renumbering. A recipe that should come after NoTorrent uses 100 or more.
+
+These fields are plain top-level keys, so they need no new runtime level. A runtime that does not know them ignores them: it reads only `id`, `requires`, `vars` and `steps`, and `validateRecipe` does not reject unknown keys. A wrong type is reported by `validateRecipe` and is read as absent by `RecipeInfo`.
 
 ## Values
 

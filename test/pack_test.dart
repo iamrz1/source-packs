@@ -85,6 +85,42 @@ void main() {
     });
   });
 
+  group('recipe metadata', () {
+    test('lists the shipped recipes by rank, videasy off', () {
+      final pack = Pack.parse(encodePack(buildPack(recipes(),
+          version: '1.0.0', published: DateTime.utc(2026))));
+
+      expect(pack.infos.map((i) => i.id),
+          ['vidcore', 'cinejoy', 'vidlink', 'moviebox', 'videasy', 'vidfast']);
+      expect(pack.infos.where((i) => !i.defaultEnabled).map((i) => i.id),
+          ['videasy']);
+      expect(pack.infos.first.name, 'Vidcore');
+    });
+
+    test('a recipe without a rank sorts last, a bad type is reported', () {
+      final info = RecipeInfo.fromRecipe('x', {'id': 'x', 'name': 'X'});
+      expect(info.rank, RecipeInfo.unranked);
+      expect(info.defaultEnabled, isTrue);
+
+      final bad = {
+        'id': 'x',
+        'name': 'X',
+        'credits': [
+          {'author': 'a', 'url': 'https://u'},
+        ],
+        'steps': [
+          {'op': 'set', 'as': 'a', 'value': '1'},
+        ],
+        'rank': '1',
+        'defaultEnabled': 'no',
+      };
+      final problems = validateRecipe(bad).join('\n');
+      expect(problems, contains('rank must be'));
+      expect(problems, contains('defaultEnabled must be'));
+      expect(RecipeInfo.fromRecipe('x', bad).rank, RecipeInfo.unranked);
+    });
+  });
+
   group('the pack', () {
     final published = DateTime.utc(2026, 11, 7, 12);
 

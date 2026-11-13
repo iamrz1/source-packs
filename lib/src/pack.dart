@@ -45,6 +45,18 @@ List<String> validateRecipe(Map<String, dynamic> recipe) {
   } else {
     _validateSteps(steps, 'steps', problems);
   }
+  final rank = recipe['rank'];
+  if (rank != null && rank is! int) {
+    problems.add('rank must be a whole number');
+  }
+  final enabled = recipe['defaultEnabled'];
+  if (enabled != null && enabled is! bool) {
+    problems.add('defaultEnabled must be true or false');
+  }
+  final description = recipe['description'];
+  if (description != null && description is! String) {
+    problems.add('description must be text');
+  }
   final needs = recipe['requires'];
   if (needs != null && (needs is! int || needs < 1)) {
     problems.add('requires must be a whole number from 1');
@@ -162,6 +174,46 @@ Map<String, dynamic> buildPack(
 List<int> encodePack(Map<String, dynamic> pack) =>
     utf8.encode('${const JsonEncoder.withIndent('  ').convert(pack)}\n');
 
+/// What a list of sources shows about one recipe, without running it.
+class RecipeInfo {
+  /// [rank] of a recipe that sets none: it sorts after every ranked one.
+  static const unranked = 1000000;
+
+  final String id;
+  final String name;
+  final String description;
+
+  /// Lower sorts first. The default order of the sources.
+  final int rank;
+
+  /// Whether the source starts on, before the user changes it.
+  final bool defaultEnabled;
+
+  const RecipeInfo({
+    required this.id,
+    required this.name,
+    this.description = '',
+    this.rank = unranked,
+    this.defaultEnabled = true,
+  });
+
+  /// Reads the metadata of [recipe]. A field of the wrong type counts as
+  /// absent, so a bad recipe still lists.
+  factory RecipeInfo.fromRecipe(String id, Map<String, dynamic> recipe) {
+    final name = recipe['name'];
+    final description = recipe['description'];
+    final rank = recipe['rank'];
+    final enabled = recipe['defaultEnabled'];
+    return RecipeInfo(
+      id: id,
+      name: name is String && name.trim().isNotEmpty ? name : id,
+      description: description is String ? description : '',
+      rank: rank is int ? rank : unranked,
+      defaultEnabled: enabled is bool ? enabled : true,
+    );
+  }
+}
+
 /// A pack that has been read.
 class Pack {
   final int schema;
@@ -175,6 +227,18 @@ class Pack {
     required this.published,
     required this.providers,
   });
+
+  /// The metadata of every recipe, in the default order: by `rank`, then id.
+  List<RecipeInfo> get infos {
+    final all = [
+      for (final e in providers.entries) RecipeInfo.fromRecipe(e.key, e.value),
+    ];
+    all.sort((a, b) {
+      final byRank = a.rank.compareTo(b.rank);
+      return byRank != 0 ? byRank : a.id.compareTo(b.id);
+    });
+    return all;
+  }
 
   /// Throws [FormatException] when the bytes are not a pack this version of
   /// the library can read.
