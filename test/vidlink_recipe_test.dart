@@ -69,6 +69,7 @@ void main() {
       'https://cdn/1080.mp4',
     ]);
     expect(result.streams.first.title, 'VidLink - Original audio');
+    expect(result.streams.map((s) => s.format).toSet(), {'mp4'});
   });
 
   test('the streams carry no headers: the file host rejects a Referer',

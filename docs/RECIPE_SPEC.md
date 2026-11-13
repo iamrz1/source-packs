@@ -77,7 +77,7 @@ Steps run in order. Any step may have `"when": { "value": ..., "equals": ..., "n
 
 `query` values that are empty are left out, and the rest are percent-encoded. A map `body` is sent as JSON. With `bodyEncoding: base64url` the body is decoded and sent as raw bytes, and `response: base64url` stores the raw reply as base64url without padding, for APIs that are not text. A reply that is not 2xx stops the scope. `headersAs` stores the reply headers as a map with lower-case names, for example `{{h.x-user}}`. Each request has a timeout set by the app.
 
-A stream has `title`, `url`, `height` (a number or nothing) and `headers`, the headers a player must send. A subtitle has `url`, `lang` and `headers`; a url already emitted is dropped.
+A stream has `title`, `url`, `height` (a number or nothing), `format` (optional: `hls`, `mp4` or `dash`, so a player does not have to guess from a URL without an extension) and `headers`, the headers a player must send. Streams with the same `title` are one server at several qualities. A subtitle has `url`, `lang` and `headers`; a url already emitted is dropped.
 
 ## Failure
 
