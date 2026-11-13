@@ -51,6 +51,30 @@ void main() {
     }
   });
 
+  test('headersAs keeps the reply headers by lower-case name', () async {
+    final result = await RecipeInterpreter(
+      FakeHttp(
+        (_) => const RecipeResponse(
+          200,
+          'ok',
+          headers: {'X-User': '{"token":"abc"}'},
+        ),
+      ),
+    ).run(
+      _recipe([
+        {'op': 'get', 'url': 'https://h/x', 'headersAs': 'h'},
+        {'op': 'set', 'as': 'u', 'value': '{{h.x-user | json}}'},
+        {
+          'op': 'emit',
+          'stream': {'url': 'https://h/{{u.token}}'},
+        },
+      ], requires: 3),
+      {},
+    );
+
+    expect(result.streams.single.url, 'https://h/abc');
+  });
+
   group('binary bodies', () {
     // Bytes that are not valid UTF-8, so a text round trip would corrupt them.
     final raw = Uint8List.fromList([0xff, 0xfe, 0x00, 0x01, 0x80, 0xc3, 0x28]);

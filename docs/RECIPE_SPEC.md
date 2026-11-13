@@ -13,7 +13,7 @@ A recipe is a JSON object:
 }
 ```
 
-`id` is lower case and names the file. `requires` (optional) is the runtime level the recipe needs; a runtime with a lower `recipeRuntimeLevel` refuses the recipe. Level 2 added the `entries` filter, `bodyEncoding` and the `base64url` response. `credits` is required: say where the steps come from. `vars` are visible to every step. The app adds its inputs (`type`, `id`, `tmdb`, `title`, `year`, ...) on top.
+`id` is lower case and names the file. `requires` (optional) is the runtime level the recipe needs; a runtime with a lower `recipeRuntimeLevel` refuses the recipe. Level 2 added the `entries` filter, `bodyEncoding` and the `base64url` response. Level 3 added `headersAs`. `credits` is required: say where the steps come from. `liveSamples` (optional) replaces the sample movie and episode that `dart run bin/pack.dart live` runs, for a site that only has some titles. `vars` are visible to every step. The app adds its inputs (`type`, `id`, `tmdb`, `title`, `year`, ...) on top.
 
 ## Values
 
@@ -52,13 +52,13 @@ Steps run in order. Any step may have `"when": { "value": ..., "equals": ..., "n
 | `set` | `as`, `value` | stores a value |
 | `require` | `value`, optional `equals` and `not`, `msg` | stops the current scope when the test fails |
 | `extract` | `from`, `regex` (one or a list, tried in order), `group` (default 1), `as` | stores the first match, or an empty string |
-| `get`, `post` | `url`, `query`, `headers`, `body`, `bodyEncoding` (`base64url`), `response` (`text`, `json` or `base64url`), `as` | sends a request and stores the reply |
+| `get`, `post` | `url`, `query`, `headers`, `body`, `bodyEncoding` (`base64url`), `response` (`text`, `json` or `base64url`), `as`, `headersAs` | sends a request and stores the reply |
 | `foreach` | `in`, `as`, `steps`, `parallel`, `retryOnTimeout` | runs the steps for each item; a failed item is skipped |
 | `tryEach` | `in`, `as`, `steps` | like `foreach`, in order, and stops at the first item that emits a stream |
 | `emit` | `stream` or `subtitle` | adds a result; skipped when `url` is empty |
 | `log` | `message` | writes a line to the log |
 
-`query` values that are empty are left out, and the rest are percent-encoded. A map `body` is sent as JSON. With `bodyEncoding: base64url` the body is decoded and sent as raw bytes, and `response: base64url` stores the raw reply as base64url without padding, for APIs that are not text. A reply that is not 2xx stops the scope. Each request has a timeout set by the app.
+`query` values that are empty are left out, and the rest are percent-encoded. A map `body` is sent as JSON. With `bodyEncoding: base64url` the body is decoded and sent as raw bytes, and `response: base64url` stores the raw reply as base64url without padding, for APIs that are not text. A reply that is not 2xx stops the scope. `headersAs` stores the reply headers as a map with lower-case names, for example `{{h.x-user}}`. Each request has a timeout set by the app.
 
 A stream has `title`, `url`, `height` (a number or nothing) and `headers`, the headers a player must send. A subtitle has `url`, `lang` and `headers`; a url already emitted is dropped.
 

@@ -6,7 +6,7 @@ This is a public resource for learning how these request chains work. It is base
 
 ## What is in a pack
 
-`pack.json` holds one recipe per provider (`cinejoy`, `vidcore`, `vidfast`, `videasy`, `vidlink`), the pack `version` and the credits. It is attached to every [release](../../releases), with `pack.json.sha256`.
+`pack.json` holds one recipe per provider (`cinejoy`, `moviebox`, `vidcore`, `vidfast`, `videasy`, `vidlink`), the pack `version` and the credits. It is attached to every [release](../../releases), with `pack.json.sha256`.
 
 A recipe is plain JSON: variables and a list of steps (`get`, `post`, `extract`, `foreach`, `emit`, ...). See [docs/RECIPE_SPEC.md](docs/RECIPE_SPEC.md). A recipe only describes requests. Ranking, timeouts and which provider is enabled stay in the app.
 
@@ -48,7 +48,7 @@ Merging to `main` updates a release PR (version and `CHANGELOG.md`, from the com
 
 ## Credits
 
-The request chains follow the public samples in [smy778/EncDecEndpoints](https://github.com/smy778/EncDecEndpoints) (MIT): `samples/vidcore.py`, `samples/vidfast.py` and `samples/videasy.py`. The decryption those chains need is done by the `enc-dec.app` API that repository documents. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+The request chains follow the public samples in [smy778/EncDecEndpoints](https://github.com/smy778/EncDecEndpoints) (MIT): `samples/vidcore.py`, `samples/vidfast.py` and `samples/videasy.py`. The decryption those chains need is done by the `enc-dec.app` API that repository documents. The `moviebox` chain follows [faisaljs/Moviebox-API](https://github.com/faisaljs/Moviebox-API) (MIT). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## License
 
