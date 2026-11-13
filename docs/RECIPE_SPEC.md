@@ -7,6 +7,8 @@ A recipe is a JSON object:
   "id": "videasy",
   "name": "Videasy",
   "description": "...",
+  "rank": 70,
+  "defaultEnabled": false,
   "credits": [{ "author": "...", "project": "...", "url": "...", "source": "...", "license": "..." }],
   "vars": { "api": "https://...", "servers": ["a", "b"] },
   "steps": [ ... ]
@@ -14,6 +16,21 @@ A recipe is a JSON object:
 ```
 
 `id` is lower case and names the file. `requires` (optional) is the runtime level the recipe needs; a runtime with a lower `recipeRuntimeLevel` refuses the recipe. Level 2 added the `entries` filter, `bodyEncoding` and the `base64url` response. Level 3 added `headersAs`. `credits` is required: say where the steps come from. `liveSamples` (optional) replaces the sample movie and episode that `dart run bin/pack.dart live` runs, for a site that only has some titles. `vars` are visible to every step. The app adds its inputs (`type`, `id`, `tmdb`, `title`, `year`, ...) on top.
+
+## Metadata
+
+An app lists its sources from the recipes, so it needs no code per source. Four fields describe a recipe to the user:
+
+- `name`: what the list shows.
+- `description` (optional): one plain sentence under the name.
+- `rank` (optional, a whole number): the default order. Lower comes first. A recipe without one comes after every ranked one, ordered by id.
+- `defaultEnabled` (optional, true or false): whether the source starts on. Default `true`. The user can switch it either way; a choice the user made is never overwritten by the pack.
+
+`Pack.infos` returns these as `RecipeInfo` objects, already sorted by `rank`, then id.
+
+Ranks share one scale with the sources an app builds in. Built-in sources take 10 (Torrentio with Real-Debrid), 20 (VixSrc) and 90 (NoTorrent). Recipes start at 30 and go up in steps of 10, so a new recipe fits between two others without renumbering. A recipe that should come after NoTorrent uses 100 or more.
+
+These fields are plain top-level keys, so they need no new runtime level. A runtime that does not know them ignores them: it reads only `id`, `requires`, `vars` and `steps`, and `validateRecipe` does not reject unknown keys. A wrong type is reported by `validateRecipe` and is read as absent by `RecipeInfo`.
 
 ## Values
 
@@ -60,7 +77,16 @@ Steps run in order. Any step may have `"when": { "value": ..., "equals": ..., "n
 
 `query` values that are empty are left out, and the rest are percent-encoded. A map `body` is sent as JSON. With `bodyEncoding: base64url` the body is decoded and sent as raw bytes, and `response: base64url` stores the raw reply as base64url without padding, for APIs that are not text. A reply that is not 2xx stops the scope. `headersAs` stores the reply headers as a map with lower-case names, for example `{{h.x-user}}`. Each request has a timeout set by the app.
 
-A stream has `title`, `url`, `height` (a number or nothing) and `headers`, the headers a player must send. A subtitle has `url`, `lang` and `headers`; a url already emitted is dropped.
+A stream has `title`, `url`, `height` (a number or nothing), `format` (optional: `hls`, `mp4` or `dash`, so a player does not have to guess from a URL without an extension) and `headers`, the headers a player must send. Streams with the same `title` are one server at several qualities. A subtitle has `url`, `lang` and `headers`; a url already emitted is dropped.
+
+### What a recipe must emit for quality
+
+An app that honours a quality cap needs to tell two kinds of stream apart, so every stream should carry `format` and, when it is known, `height`.
+
+- **Ladder**: one link per quality, such as a progressive MP4 file or an HLS media playlist for a single quality. Emit one stream per quality with its `height` and the same `title` per server. The app plays the highest one at or below the cap, or the lowest one when all are above it. Do not sort the streams yourself; the app orders them.
+- **Adaptive**: one manifest that holds several renditions, such as an HLS master playlist or a DASH manifest. Emit it with `format` and no `height`. The app applies the cap inside the player and never rewrites the manifest, so audio and subtitle renditions keep working.
+
+A stream with no `height` and no `format` is treated as a ladder stream of unknown quality and stays where it is.
 
 ## Failure
 

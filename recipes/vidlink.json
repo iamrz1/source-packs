@@ -2,7 +2,8 @@
   "id": "vidlink",
   "name": "VidLink",
   "requires": 2,
-  "description": "Resolves direct MP4 files (360p to 1080p, HEVC) with subtitles from vidlink.pro. The file host rejects any Referer and any browser User-Agent, so the player must send neither.",
+  "description": "MP4 files up to 1080p HEVC, many subtitles",
+  "rank": 50,
   "credits": [
     {
       "author": "smy778",
@@ -122,6 +123,7 @@
           "stream": {
             "title": "VidLink - Original audio",
             "url": "{{q.value.url}}",
+            "format": "mp4",
             "height": "{{q.key | height}}",
             "headers": {}
           }

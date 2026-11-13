@@ -6,6 +6,10 @@ class RecipeStream {
   /// Vertical resolution, or null when the recipe doesn't know it.
   final int? height;
 
+  /// What [url] is: `hls`, `mp4` or `dash`, or null when the recipe does not
+  /// say (the player then goes by the URL).
+  final String? format;
+
   /// Headers the player must send to fetch [url].
   final Map<String, String> headers;
 
@@ -13,6 +17,7 @@ class RecipeStream {
     required this.title,
     required this.url,
     this.height,
+    this.format,
     this.headers = const {},
   });
 

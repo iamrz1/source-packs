@@ -27,7 +27,7 @@ You should see `pack.json: OK`.
 3. Read it with `Pack.parse(bytes)`. Ignore a pack with a `schema` you do not know, and run `validateRecipe` on each recipe before you save it.
 4. Run a provider with `RecipeInterpreter(http).run(pack.providers['videasy']!, inputs)`.
 
-`inputs` are strings: `type` (`movie` or `series`), `id` (`tt...` or `tt...:season:episode`), `tmdb`, `title`, `year`. A run never throws. It returns the streams, the subtitles, and an `error` when it found nothing. Keep the previous good pack on disk and fall back to code in the app when there is none.
+`inputs` are strings: `type` (`movie` or `series`), `id` (`tt...` or `tt...:season:episode`), `tmdb`, `title`, `year`. A run never throws. It returns the streams, the subtitles, and an `error` when it found nothing. Keep the previous good pack on disk. To list the sources, read `pack.infos`: each has an `id`, `name`, `description`, `rank` (the default order) and `defaultEnabled`.
 
 Stream URLs from these sites expire (VidLink's last about an hour) and some are bound to the IP that resolved them. Never cache them. A stream's `headers` are exactly what the player must send: VidLink's file host rejects any Referer and any browser User-Agent, so its streams carry none, and the player must not add them.
 

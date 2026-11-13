@@ -298,6 +298,9 @@ class RecipeInterpreter {
           title: '${v['title'] ?? ''}',
           url: url,
           height: v['height'] is int ? v['height'] as int : null,
+          format: const {'hls', 'mp4', 'dash'}.contains(v['format'])
+              ? v['format'] as String
+              : null,
           headers: _headers(v['headers']),
         ),
       );
