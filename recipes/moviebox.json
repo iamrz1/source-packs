@@ -3,6 +3,7 @@
   "name": "MovieBox",
   "requires": 3,
   "description": "Resolves MP4 streams in English with quality labels, and subtitles, from MovieBox. Finds the title by search, so it only works for titles in the MovieBox catalog.",
+  "rank": 60,
   "credits": [
     {
       "author": "faisaljs",

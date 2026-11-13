@@ -3,6 +3,7 @@
   "name": "Cinejoy",
   "requires": 2,
   "description": "Resolves HLS streams from cinejoy.pk's servers (one stream per working server, one on 4K) with subtitles.",
+  "rank": 40,
   "credits": [
     {
       "author": "smy778",

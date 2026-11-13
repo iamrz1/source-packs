@@ -2,6 +2,7 @@
   "id": "vidfast",
   "name": "Vidfast",
   "description": "Resolves HLS streams for vidfast.vc through the two-stage enc-dec.app chain.",
+  "rank": 80,
   "credits": [
     {
       "author": "smy778",

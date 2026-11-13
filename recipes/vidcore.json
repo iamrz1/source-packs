@@ -2,6 +2,7 @@
   "id": "vidcore",
   "name": "Vidcore",
   "description": "Resolves HLS streams for vidcore.io through the two-stage enc-dec.app chain.",
+  "rank": 30,
   "credits": [
     {
       "author": "smy778",

@@ -2,6 +2,8 @@
   "id": "videasy",
   "name": "Videasy",
   "description": "Resolves HLS streams with quality labels, and subtitles, from the Videasy API.",
+  "rank": 70,
+  "defaultEnabled": false,
   "credits": [
     {
       "author": "smy778",

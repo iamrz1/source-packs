@@ -3,6 +3,7 @@
   "name": "VidLink",
   "requires": 2,
   "description": "Resolves direct MP4 files (360p to 1080p, HEVC) with subtitles from vidlink.pro. The file host rejects any Referer and any browser User-Agent, so the player must send neither.",
+  "rank": 50,
   "credits": [
     {
       "author": "smy778",
