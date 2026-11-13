@@ -79,6 +79,15 @@ Steps run in order. Any step may have `"when": { "value": ..., "equals": ..., "n
 
 A stream has `title`, `url`, `height` (a number or nothing), `format` (optional: `hls`, `mp4` or `dash`, so a player does not have to guess from a URL without an extension) and `headers`, the headers a player must send. Streams with the same `title` are one server at several qualities. A subtitle has `url`, `lang` and `headers`; a url already emitted is dropped.
 
+### What a recipe must emit for quality
+
+An app that honours a quality cap needs to tell two kinds of stream apart, so every stream should carry `format` and, when it is known, `height`.
+
+- **Ladder**: one link per quality, such as a progressive MP4 file or an HLS media playlist for a single quality. Emit one stream per quality with its `height` and the same `title` per server. The app plays the highest one at or below the cap, or the lowest one when all are above it. Do not sort the streams yourself; the app orders them.
+- **Adaptive**: one manifest that holds several renditions, such as an HLS master playlist or a DASH manifest. Emit it with `format` and no `height`. The app applies the cap inside the player and never rewrites the manifest, so audio and subtitle renditions keep working.
+
+A stream with no `height` and no `format` is treated as a ladder stream of unknown quality and stays where it is.
+
 ## Failure
 
 A failure stops the current scope. At the top that gives an empty result with the reason in `error`. Inside `foreach` or `tryEach` it skips that item, and what the item emitted is discarded.
