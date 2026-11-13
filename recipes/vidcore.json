@@ -1,7 +1,7 @@
 {
   "id": "vidcore",
   "name": "Vidcore",
-  "description": "Resolves HLS streams for vidcore.io through the two-stage enc-dec.app chain.",
+  "description": "Multi-server HLS via enc-dec.app (slower, third-party)",
   "rank": 30,
   "credits": [
     {
@@ -265,6 +265,7 @@
               "default": "Vidcore"
             },
             "url": "{{info.url}}",
+            "format": "hls",
             "headers": {
               "User-Agent": "{{ua}}",
               "Referer": "{{site}}/",

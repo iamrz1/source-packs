@@ -1,7 +1,7 @@
 {
   "id": "videasy",
   "name": "Videasy",
-  "description": "Resolves HLS streams with quality labels, and subtitles, from the Videasy API.",
+  "description": "Quality-labeled HLS, subtitles included",
   "rank": 70,
   "defaultEnabled": false,
   "credits": [
@@ -176,6 +176,7 @@
               "stream": {
                 "title": "{{server | capitalize}} - Original audio",
                 "url": "{{src.url}}",
+                "format": "hls",
                 "height": "{{src.quality | default:'Auto' | height}}",
                 "headers": {
                   "Referer": "{{origin}}/",

@@ -2,7 +2,7 @@
   "id": "cinejoy",
   "name": "Cinejoy",
   "requires": 2,
-  "description": "Resolves HLS streams from cinejoy.pk's servers (one stream per working server, one on 4K) with subtitles.",
+  "description": "Multi-server HLS, a 4K server, subtitles included",
   "rank": 40,
   "credits": [
     {
@@ -199,6 +199,7 @@
               "stream": {
                 "title": "Cinejoy {{server.name}}",
                 "url": "{{st.playlist}}",
+                "format": "hls",
                 "headers": {
                   "Referer": "{{site}}/",
                   "Origin": "{{site}}",
