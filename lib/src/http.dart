@@ -7,7 +7,15 @@ class RecipeResponse {
   /// The raw reply, for steps that read a binary body. When null, the UTF-8
   /// bytes of [body] stand in for it.
   final List<int>? bytes;
-  const RecipeResponse(this.status, this.body, {this.bytes});
+
+  /// The reply headers, with lower-case names.
+  final Map<String, String> headers;
+  const RecipeResponse(
+    this.status,
+    this.body, {
+    this.bytes,
+    this.headers = const {},
+  });
 
   bool get ok => status >= 200 && status < 300;
 }
@@ -52,6 +60,7 @@ class PackageHttp implements RecipeHttp {
       response.statusCode,
       response.body,
       bytes: response.bodyBytes,
+      headers: response.headers,
     );
   }
 }

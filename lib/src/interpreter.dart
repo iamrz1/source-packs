@@ -36,8 +36,9 @@ typedef RecipeLog = void Function(String message);
 
 /// What this interpreter can run. A recipe that sets `requires` higher than
 /// this is refused cleanly instead of running wrongly. Level 2 added the
-/// `entries` filter, `bodyEncoding` and the `base64url` response.
-const recipeRuntimeLevel = 2;
+/// `entries` filter, `bodyEncoding` and the `base64url` response. Level 3 added
+/// `headersAs`.
+const recipeRuntimeLevel = 3;
 
 /// Runs a recipe: a list of steps over a set of variables. See
 /// docs/RECIPE_SPEC.md for the steps.
@@ -203,6 +204,12 @@ class RecipeInterpreter {
     }
     final name = step['as'];
     if (name is String) scope.set(name, result);
+    final headersName = step['headersAs'];
+    if (headersName is String) {
+      scope.set(headersName, {
+        for (final e in response.headers.entries) e.key.toLowerCase(): e.value,
+      });
+    }
   }
 
   static List<int> _base64UrlDecode(String text) {
