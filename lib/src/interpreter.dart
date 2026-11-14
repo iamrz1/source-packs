@@ -37,8 +37,15 @@ typedef RecipeLog = void Function(String message);
 /// What this interpreter can run. A recipe that sets `requires` higher than
 /// this is refused cleanly instead of running wrongly. Level 2 added the
 /// `entries` filter, `bodyEncoding` and the `base64url` response. Level 3 added
-/// `headersAs`.
-const recipeRuntimeLevel = 3;
+/// `headersAs`. Level 4 added the stream fields `expiresAt`, `lang` and `size`.
+const recipeRuntimeLevel = 4;
+
+/// Most text an `extract` step reads. Longer text is cut, so a hostile or
+/// broken reply cannot make a pattern scan megabytes.
+const maxExtractText = 1000000;
+
+/// Longest pattern an `extract` step accepts.
+const maxRegexLength = 500;
 
 /// Runs a recipe: a list of steps over a set of variables. See
 /// docs/RECIPE_SPEC.md for the steps.
@@ -136,12 +143,16 @@ class RecipeInterpreter {
   }
 
   String _extract(Map step, Scope scope) {
-    final text = '${evalValue(step['from'], scope) ?? ''}';
+    var text = '${evalValue(step['from'], scope) ?? ''}';
+    if (text.length > maxExtractText) text = text.substring(0, maxExtractText);
     final patterns = step['regex'] is List
         ? (step['regex'] as List).cast<String>()
         : [step['regex'] as String];
     final group = (step['group'] as int?) ?? 1;
     for (final pattern in patterns) {
+      if (pattern.length > maxRegexLength) {
+        throw const StepFailure('regex is too long');
+      }
       final m = RegExp(pattern).firstMatch(text);
       if (m != null && group <= m.groupCount) return m.group(group) ?? '';
     }
@@ -302,6 +313,9 @@ class RecipeInterpreter {
               ? v['format'] as String
               : null,
           headers: _headers(v['headers']),
+          expiresAt: _wholeNumber(v['expiresAt']),
+          lang: _language(v['lang']),
+          size: _wholeNumber(v['size']),
         ),
       );
     }
@@ -318,6 +332,19 @@ class RecipeInterpreter {
         ),
       );
     }
+  }
+
+  /// A whole number from a number or numeric text, or null.
+  static int? _wholeNumber(dynamic v) {
+    final n = v is num ? v : num.tryParse('${v ?? ''}'.trim());
+    if (n == null || !n.isFinite || n < 0) return null;
+    return n.toInt();
+  }
+
+  /// A two-letter lower-case language code or `original`, else empty.
+  static String _language(dynamic v) {
+    final s = '${v ?? ''}'.trim().toLowerCase();
+    return s == 'original' || RegExp(r'^[a-z]{2}$').hasMatch(s) ? s : '';
   }
 
   Map<String, String> _headers(dynamic raw) => raw is Map
