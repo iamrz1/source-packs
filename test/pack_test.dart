@@ -12,6 +12,17 @@ List<Map<String, dynamic>> recipes() => [
         jsonDecode(f.readAsStringSync()) as Map<String, dynamic>,
     ];
 
+const _ids = [
+  'cinejoy',
+  'moviebox',
+  'notorrent',
+  'vidcore',
+  'videasy',
+  'vidfast',
+  'vidlink',
+  'vixsrc',
+];
+
 void main() {
   group('the shipped recipes', () {
     test('are valid', () {
@@ -23,11 +34,13 @@ void main() {
     test('each credits where its steps come from', () {
       for (final r in recipes()) {
         final credits = (r['credits'] as List).cast<Map>();
-        expect(
-            credits.first['url'],
-            r['id'] == 'moviebox'
-                ? 'https://github.com/faisaljs/Moviebox-API'
-                : 'https://github.com/smy778/EncDecEndpoints',
+        const own = {
+          'moviebox': 'https://github.com/faisaljs/Moviebox-API',
+          'notorrent': 'https://github.com/Stremio/stremio-addon-sdk',
+          'vixsrc': 'https://vixsrc.to',
+        };
+        expect(credits.first['url'],
+            own[r['id']] ?? 'https://github.com/smy778/EncDecEndpoints',
             reason: '${r['id']}');
       }
     });
@@ -90,11 +103,19 @@ void main() {
       final pack = Pack.parse(encodePack(buildPack(recipes(),
           version: '1.0.0', published: DateTime.utc(2026))));
 
-      expect(pack.infos.map((i) => i.id),
-          ['vidcore', 'cinejoy', 'vidlink', 'moviebox', 'videasy', 'vidfast']);
+      expect(pack.infos.map((i) => i.id), [
+        'vixsrc',
+        'vidcore',
+        'cinejoy',
+        'vidlink',
+        'moviebox',
+        'videasy',
+        'vidfast',
+        'notorrent',
+      ]);
       expect(pack.infos.where((i) => !i.defaultEnabled).map((i) => i.id),
           ['videasy']);
-      expect(pack.infos.first.name, 'Vidcore');
+      expect(pack.infos.first.name, 'VixSrc');
     });
 
     test('a recipe without a rank sorts last, a bad type is reported', () {
@@ -130,10 +151,9 @@ void main() {
       expect(pack['schema'], packSchema);
       expect(pack['version'], '1.2.3');
       expect(pack['published'], '2026-11-07T12:00:00.000Z');
-      expect((pack['providers'] as Map).keys,
-          ['cinejoy', 'moviebox', 'vidcore', 'videasy', 'vidfast', 'vidlink']);
+      expect((pack['providers'] as Map).keys, _ids);
       expect((pack['credits'] as List).map((c) => c['author']),
-          ['smy778', 'faisaljs']);
+          ['smy778', 'faisaljs', 'Stremio', 'vixsrc.to']);
     });
 
     test('is the same bytes every time', () {
@@ -150,8 +170,7 @@ void main() {
       final pack = Pack.parse(bytes);
 
       expect(pack.version, '1.2.3');
-      expect(pack.providers.keys,
-          ['cinejoy', 'moviebox', 'vidcore', 'videasy', 'vidfast', 'vidlink']);
+      expect(pack.providers.keys, _ids);
       expect(pack.published, published);
     });
 

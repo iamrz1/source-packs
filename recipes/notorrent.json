@@ -1,0 +1,129 @@
+{
+  "id": "notorrent",
+  "name": "NoTorrent",
+  "requires": 4,
+  "description": "Plays the HTTP and HLS links of the NoTorrent Stremio addon. Many entries are Spanish or Latin American dubs.",
+  "rank": 90,
+  "credits": [
+    {
+      "author": "Stremio",
+      "project": "stremio-addon-sdk",
+      "url": "https://github.com/Stremio/stremio-addon-sdk",
+      "source": "docs/api/requests/defineStreamHandler.md, docs/api/responses/stream.md",
+      "license": "MIT",
+      "note": "The request path and the stream object are the public Stremio addon protocol. The addon itself is run by its own authors."
+    }
+  ],
+  "liveSamples": {
+    "movie": {
+      "type": "movie",
+      "id": "tt0133093",
+      "tmdb": "603",
+      "title": "The Matrix",
+      "year": "1999"
+    },
+    "episode": {
+      "type": "series",
+      "id": "tt0944947:1:1",
+      "tmdb": "1399",
+      "title": "Game of Thrones",
+      "year": "2011"
+    }
+  },
+  "vars": {
+    "bases": [
+      "https://addon.notorrent2.workers.dev"
+    ]
+  },
+  "steps": [
+    {
+      "op": "require",
+      "value": "{{id | prefix:'tt'}}",
+      "msg": "needs an imdb id"
+    },
+    {
+      "op": "tryEach",
+      "in": "{{bases}}",
+      "as": "base",
+      "steps": [
+        {
+          "op": "get",
+          "url": "{{base}}/stream/{{type}}/{{id | urlenc}}.json",
+          "response": "json",
+          "as": "reply"
+        },
+        {
+          "op": "require",
+          "value": "{{reply.streams}}",
+          "msg": "addon returned no streams"
+        },
+        {
+          "op": "foreach",
+          "in": "{{reply.streams}}",
+          "as": "s",
+          "steps": [
+            {
+              "op": "extract",
+              "from": {
+                "$join": [
+                  "{{s.name}}",
+                  "{{s.title}}"
+                ],
+                "sep": " "
+              },
+              "regex": [
+                "\\b(\\d{3,4})\\s*[pP]\\b",
+                "\\b(4[kK])\\b"
+              ],
+              "as": "quality"
+            },
+            {
+              "op": "extract",
+              "from": "{{s.title}}",
+              "regex": [
+                "(Latino)",
+                "(Castellano)",
+                "(T[üu]rk[çc]e)",
+                "(Portugu[êe]s)",
+                "(Original)"
+              ],
+              "as": "audio"
+            },
+            {
+              "op": "emit",
+              "stream": {
+                "title": {
+                  "$first": [
+                    "{{s.title | trim}}",
+                    "{{s.description | trim}}",
+                    "{{s.name | trim}}"
+                  ]
+                },
+                "url": "{{s.url}}",
+                "height": "{{quality | height}}",
+                "headers": "{{s.behaviorHints.proxyHeaders.request}}",
+                "format": "hls",
+                "lang": "{{audio | map:Latino=es,Castellano=es,Türkçe=tr,Turkce=tr,Português=pt,Portugues=pt,Original=original}}",
+                "size": "{{s.behaviorHints.videoSize}}"
+              }
+            },
+            {
+              "op": "foreach",
+              "in": "{{s.subtitles}}",
+              "as": "c",
+              "steps": [
+                {
+                  "op": "emit",
+                  "subtitle": {
+                    "url": "{{c.url}}",
+                    "lang": "{{c.lang | lower}}"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

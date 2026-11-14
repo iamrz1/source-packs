@@ -1,0 +1,205 @@
+{
+  "id": "vixsrc",
+  "name": "VixSrc",
+  "requires": 4,
+  "description": "Resolves an HLS master playlist with English audio and subtitles from vixsrc.to. Needs a TMDB id. The link is signed and expires.",
+  "rank": 20,
+  "credits": [
+    {
+      "author": "vixsrc.to",
+      "project": "vixsrc.to embed API",
+      "url": "https://vixsrc.to",
+      "source": "GET /api/movie/{tmdb}, GET /api/tv/{tmdb}/{season}/{episode}, then the embed page it names",
+      "note": "No upstream project. The steps use the site's own public embed API: a call that returns the embed path, then the embed page with its inline window.masterPlaylist object."
+    }
+  ],
+  "liveSamples": {
+    "movie": {
+      "type": "movie",
+      "id": "tt0133093",
+      "tmdb": "603",
+      "title": "The Matrix",
+      "year": "1999"
+    },
+    "episode": {
+      "type": "series",
+      "id": "tt0944947:1:1",
+      "tmdb": "1399",
+      "title": "Game of Thrones",
+      "year": "2011"
+    }
+  },
+  "vars": {
+    "site": "https://vixsrc.to",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+  },
+  "steps": [
+    {
+      "op": "set",
+      "as": "tmdbId",
+      "value": "{{tmdb | digits}}"
+    },
+    {
+      "op": "require",
+      "value": "{{tmdbId}}",
+      "msg": "no tmdb id"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "{{id | split:':' | at:1}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "{{id | split:':' | at:2}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{season}}",
+      "msg": "series without season",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "require",
+      "value": "{{episode}}",
+      "msg": "series without episode",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "path",
+      "value": "/api/movie/{{tmdbId}}"
+    },
+    {
+      "op": "set",
+      "as": "path",
+      "value": "/api/tv/{{tmdbId}}/{{season}}/{{episode}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "get",
+      "url": "{{site}}{{path}}",
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "{{site}}/",
+        "Origin": "{{site}}"
+      },
+      "response": "json",
+      "as": "api"
+    },
+    {
+      "op": "require",
+      "value": "{{api.src}}",
+      "msg": "no embed path"
+    },
+    {
+      "op": "get",
+      "url": "{{site}}{{api.src}}",
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "{{site}}/",
+        "Origin": "{{site}}"
+      },
+      "as": "page"
+    },
+    {
+      "op": "extract",
+      "from": "{{page}}",
+      "regex": "masterPlaylist[\\s\\S]*?['\"]token['\"]\\s*:\\s*['\"]([^'\"]+)",
+      "as": "token"
+    },
+    {
+      "op": "extract",
+      "from": "{{page}}",
+      "regex": "masterPlaylist[\\s\\S]*?['\"]expires['\"]\\s*:\\s*['\"]([^'\"]+)",
+      "as": "expires"
+    },
+    {
+      "op": "extract",
+      "from": "{{page}}",
+      "regex": "masterPlaylist[\\s\\S]*?\\burl\\s*:\\s*['\"]([^'\"]+)",
+      "as": "playlist"
+    },
+    {
+      "op": "require",
+      "value": "{{token}}",
+      "msg": "embed page has no token"
+    },
+    {
+      "op": "require",
+      "value": "{{expires}}",
+      "msg": "embed page has no expiry"
+    },
+    {
+      "op": "require",
+      "value": "{{playlist}}",
+      "msg": "embed page has no playlist url"
+    },
+    {
+      "op": "set",
+      "as": "master",
+      "value": {
+        "$first": [
+          "{{playlist | prefix:'http'}}",
+          "{{site}}{{playlist}}"
+        ]
+      }
+    },
+    {
+      "op": "extract",
+      "from": "{{master}}",
+      "regex": "(\\?)",
+      "as": "hasQuery"
+    },
+    {
+      "op": "set",
+      "as": "sep",
+      "value": "?"
+    },
+    {
+      "op": "set",
+      "as": "sep",
+      "value": "&",
+      "when": {
+        "value": "{{hasQuery}}"
+      }
+    },
+    {
+      "op": "emit",
+      "stream": {
+        "title": "VixSrc",
+        "url": "{{master}}{{sep}}token={{token}}&expires={{expires}}&h=1&lang=en",
+        "headers": {
+          "User-Agent": "{{ua}}",
+          "Referer": "{{site}}/",
+          "Origin": "{{site}}"
+        },
+        "format": "hls",
+        "expiresAt": "{{expires}}",
+        "lang": "en"
+      }
+    }
+  ]
+}
