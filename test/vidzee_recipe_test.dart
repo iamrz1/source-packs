@@ -64,7 +64,8 @@ void main() {
     expect(result.streams, isEmpty);
   });
 
-  test('a language list adds one labelled stream per language, with the '
+  test(
+      'a language list adds one labelled stream per language, with the '
       'headers the reply asks for', () async {
     final result = await run(
       'vidzee',
