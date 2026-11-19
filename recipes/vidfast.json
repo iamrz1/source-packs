@@ -3,6 +3,7 @@
   "name": "Vidfast",
   "description": "Multi-server HLS via enc-dec.app (slower, third-party)",
   "rank": 80,
+  "defaultEnabled": false,
   "credits": [
     {
       "author": "smy778",

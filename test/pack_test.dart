@@ -14,7 +14,6 @@ List<Map<String, dynamic>> recipes() => [
 
 const _ids = [
   'cinejoy',
-  'hexa',
   'moviebox',
   'notorrent',
   'vidcore',
@@ -101,7 +100,8 @@ void main() {
   });
 
   group('recipe metadata', () {
-    test('lists the shipped recipes by rank, videasy off', () {
+    test('lists the shipped recipes by rank, vidcore, videasy and vidfast off',
+        () {
       final pack = Pack.parse(encodePack(buildPack(recipes(),
           version: '1.0.0', published: DateTime.utc(2026))));
 
@@ -115,10 +115,9 @@ void main() {
         'vidfast',
         'notorrent',
         'vidup',
-        'hexa',
       ]);
       expect(pack.infos.where((i) => !i.defaultEnabled).map((i) => i.id),
-          ['videasy']);
+          ['vidcore', 'videasy', 'vidfast']);
       expect(pack.infos.first.name, 'VixSrc');
     });
 
