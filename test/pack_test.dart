@@ -14,12 +14,14 @@ List<Map<String, dynamic>> recipes() => [
 
 const _ids = [
   'cinejoy',
+  'hexa',
   'moviebox',
   'notorrent',
   'vidcore',
   'videasy',
   'vidfast',
   'vidlink',
+  'vidup',
   'vixsrc',
 ];
 
@@ -112,6 +114,8 @@ void main() {
         'videasy',
         'vidfast',
         'notorrent',
+        'vidup',
+        'hexa',
       ]);
       expect(pack.infos.where((i) => !i.defaultEnabled).map((i) => i.id),
           ['videasy']);

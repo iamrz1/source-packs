@@ -2,7 +2,7 @@
 
 The request chains in `recipes/`, except `moviebox`, follow the public samples in
 [smy778/EncDecEndpoints](https://github.com/smy778/EncDecEndpoints)
-(`samples/vidcore.py`, `samples/vidfast.py`, `samples/videasy.py`). The crypto
+(`samples/vidcore.py`, `samples/vidfast.py`, `samples/videasy.py`, `samples/vidup.py`, `samples/hexa.py`). The crypto
 those chains need is done by the `enc-dec.app` API, which that repository
 documents. Its license applies to that work:
 
