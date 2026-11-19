@@ -1,0 +1,133 @@
+{
+  "id": "vidspark",
+  "name": "VidSpark",
+  "requires": 4,
+  "description": "HLS with adaptive quality, a single server",
+  "rank": 120,
+  "credits": [
+    {
+      "author": "hvtrs",
+      "project": "movies",
+      "url": "https://github.com/x8rr/movies",
+      "source": "src/vidspark.js",
+      "license": "MIT",
+      "note": "The request shape, the player key header and the playback headers follow this MIT-licensed project."
+    }
+  ],
+  "liveSamples": {
+    "movie": {
+      "type": "movie",
+      "id": "tt0137523",
+      "tmdb": "550",
+      "title": "Fight Club",
+      "year": "1999"
+    },
+    "episode": {
+      "type": "series",
+      "id": "tt0944947:1:1",
+      "tmdb": "1399",
+      "title": "Game of Thrones",
+      "year": "2011"
+    }
+  },
+  "vars": {
+    "site": "https://vidspark.to",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "key": "3a67e8866ae1d2bb9e81fe7f73315a56eb3bdf5e3e755c7554c8be6910aa6b13"
+  },
+  "steps": [
+    {
+      "op": "set",
+      "as": "tmdbId",
+      "value": "{{tmdb | digits}}"
+    },
+    {
+      "op": "require",
+      "value": "{{tmdbId}}",
+      "msg": "needs a tmdb id"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "0"
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "0"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "{{id | split:':' | at:1}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "{{id | split:':' | at:2}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "path",
+      "value": "movie/{{tmdbId}}"
+    },
+    {
+      "op": "set",
+      "as": "path",
+      "value": "tv/{{tmdbId}}/{{season}}/{{episode}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "get",
+      "url": "{{site}}/api/vidora/v1/{{path}}",
+      "headers": {
+        "User-Agent": "{{ua}}",
+        "Referer": "{{site}}/{{path}}",
+        "x-player-key": "{{key}}"
+      },
+      "response": "json",
+      "as": "reply"
+    },
+    {
+      "op": "require",
+      "value": "{{reply.result}}",
+      "msg": "title not available"
+    },
+    {
+      "op": "require",
+      "value": "{{reply.sources}}",
+      "msg": "no sources"
+    },
+    {
+      "op": "foreach",
+      "in": "{{reply.sources}}",
+      "as": "src",
+      "steps": [
+        {
+          "op": "emit",
+          "stream": {
+            "title": "VidSpark",
+            "url": "{{src.url}}",
+            "format": "hls",
+            "headers": {
+              "User-Agent": "{{ua}}",
+              "Referer": "{{site}}/",
+              "Origin": "{{site}}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

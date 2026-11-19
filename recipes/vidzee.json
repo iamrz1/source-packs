@@ -1,0 +1,152 @@
+{
+  "id": "vidzee",
+  "name": "VidZee",
+  "requires": 4,
+  "description": "HLS and MP4 from a few servers, some in Hindi",
+  "rank": 110,
+  "credits": [
+    {
+      "author": "hvtrs",
+      "project": "movies",
+      "url": "https://github.com/x8rr/movies",
+      "source": "src/vidzee.js",
+      "license": "MIT",
+      "note": "The request shape and the player headers follow this MIT-licensed project. The plain JSON form is used, never the encrypted one."
+    }
+  ],
+  "liveSamples": {
+    "movie": {
+      "type": "movie",
+      "id": "tt0133093",
+      "tmdb": "603",
+      "title": "The Matrix",
+      "year": "1999"
+    },
+    "episode": {
+      "type": "series",
+      "id": "tt0944947:1:1",
+      "tmdb": "1399",
+      "title": "Game of Thrones",
+      "year": "2011"
+    }
+  },
+  "vars": {
+    "core": "https://core.vidzee.wtf",
+    "player": "https://player.vidzee.wtf",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "servers": [
+      "dcloud",
+      "tik",
+      "v6:English",
+      "v6:Hindi"
+    ]
+  },
+  "steps": [
+    {
+      "op": "set",
+      "as": "tmdbId",
+      "value": "{{tmdb | digits}}"
+    },
+    {
+      "op": "require",
+      "value": "{{tmdbId}}",
+      "msg": "needs a tmdb id"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "0"
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "0"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "{{id | split:':' | at:1}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "{{id | split:':' | at:2}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "path",
+      "value": "movie/{{tmdbId}}"
+    },
+    {
+      "op": "set",
+      "as": "path",
+      "value": "tv/{{tmdbId}}/{{season}}/{{episode}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "foreach",
+      "in": "{{servers}}",
+      "as": "server",
+      "parallel": true,
+      "retryOnTimeout": 1,
+      "steps": [
+        {
+          "op": "get",
+          "url": "{{core}}/streams/{{path}}",
+          "query": {
+            "s": "{{server}}"
+          },
+          "headers": {
+            "User-Agent": "{{ua}}",
+            "Referer": "{{player}}/",
+            "Origin": "{{player}}"
+          },
+          "response": "json",
+          "as": "reply"
+        },
+        {
+          "op": "require",
+          "value": "{{reply.url}}",
+          "msg": "server has no stream"
+        },
+        {
+          "op": "extract",
+          "from": "{{reply.url}}",
+          "regex": [
+            "\\.(mp4|mkv|webm)(?:\\?|$)"
+          ],
+          "as": "ext"
+        },
+        {
+          "op": "emit",
+          "stream": {
+            "title": "VidZee {{server}}",
+            "url": "{{reply.url}}",
+            "format": {
+              "$first": [
+                "{{ext | map:mp4=mp4,mkv=mp4,webm=mp4}}",
+                "hls"
+              ]
+            },
+            "headers": {
+              "User-Agent": "{{ua}}",
+              "Referer": "{{player}}/",
+              "Origin": "{{player}}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

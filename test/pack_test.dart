@@ -20,7 +20,9 @@ const _ids = [
   'videasy',
   'vidfast',
   'vidlink',
+  'vidspark',
   'vidup',
+  'vidzee',
   'vixsrc',
 ];
 
@@ -38,6 +40,8 @@ void main() {
         const own = {
           'moviebox': 'https://github.com/faisaljs/Moviebox-API',
           'notorrent': 'https://github.com/Stremio/stremio-addon-sdk',
+          'vidspark': 'https://github.com/x8rr/movies',
+          'vidzee': 'https://github.com/x8rr/movies',
           'vixsrc': 'https://vixsrc.to',
         };
         expect(credits.first['url'],
@@ -115,6 +119,8 @@ void main() {
         'vidfast',
         'notorrent',
         'vidup',
+        'vidzee',
+        'vidspark',
       ]);
       expect(pack.infos.where((i) => !i.defaultEnabled).map((i) => i.id),
           ['vidcore', 'videasy', 'vidfast']);
@@ -156,7 +162,7 @@ void main() {
       expect(pack['published'], '2026-11-07T12:00:00.000Z');
       expect((pack['providers'] as Map).keys, _ids);
       expect((pack['credits'] as List).map((c) => c['author']),
-          ['smy778', 'faisaljs', 'Stremio', 'vixsrc.to']);
+          ['smy778', 'faisaljs', 'Stremio', 'hvtrs', 'vixsrc.to']);
     });
 
     test('is the same bytes every time', () {
