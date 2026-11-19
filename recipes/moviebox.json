@@ -3,7 +3,7 @@
   "name": "MovieBox",
   "requires": 3,
   "description": "English MP4 files with quality labels and subtitles, only for titles in the MovieBox catalog",
-  "rank": 60,
+  "rank": 70,
   "credits": [
     {
       "author": "faisaljs",

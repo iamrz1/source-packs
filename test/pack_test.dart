@@ -111,16 +111,16 @@ void main() {
 
       expect(pack.infos.map((i) => i.id), [
         'vixsrc',
-        'vidcore',
-        'cinejoy',
+        'vidzee',
         'vidlink',
+        'cinejoy',
+        'vidup',
         'moviebox',
+        'vidspark',
+        'notorrent',
+        'vidcore',
         'videasy',
         'vidfast',
-        'notorrent',
-        'vidup',
-        'vidzee',
-        'vidspark',
       ]);
       expect(pack.infos.where((i) => !i.defaultEnabled).map((i) => i.id),
           ['vidcore', 'videasy', 'vidfast']);

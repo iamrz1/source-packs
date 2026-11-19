@@ -3,7 +3,7 @@
   "name": "VidSpark",
   "requires": 4,
   "description": "HLS with adaptive quality, a single server",
-  "rank": 120,
+  "rank": 80,
   "credits": [
     {
       "author": "hvtrs",
