@@ -2,7 +2,7 @@
   "id": "vidzee",
   "name": "VidZee",
   "requires": 4,
-  "description": "HLS and MP4 from a few servers, some in Hindi",
+  "description": "HLS and MP4 from several servers, with Hindi, Tamil, Telugu and other audio labelled by the site's own language list",
   "rank": 30,
   "credits": [
     {
@@ -39,6 +39,9 @@
       "tik",
       "v6:English",
       "v6:Hindi"
+    ],
+    "once": [
+      "languages"
     ]
   },
   "steps": [
@@ -130,6 +133,9 @@
         },
         {
           "op": "emit",
+          "when": {
+            "value": "{{reply.headers.Referer}}"
+          },
           "stream": {
             "title": "VidZee {{server}}",
             "url": "{{reply.url}}",
@@ -139,12 +145,138 @@
                 "hls"
               ]
             },
+            "lang": "{{reply.language | map:Hindi=hi,Tamil=ta,Telugu=te,Bengali=bn,Malayalam=ml,English=en}}",
+            "headers": {
+              "User-Agent": "{{ua}}",
+              "Referer": "{{reply.headers.Referer}}"
+            }
+          }
+        },
+        {
+          "op": "emit",
+          "when": {
+            "value": "{{reply.headers.Referer}}",
+            "not": true
+          },
+          "stream": {
+            "title": "VidZee {{server}}",
+            "url": "{{reply.url}}",
+            "format": {
+              "$first": [
+                "{{ext | map:mp4=mp4,mkv=mp4,webm=mp4}}",
+                "hls"
+              ]
+            },
+            "lang": "{{reply.language | map:Hindi=hi,Tamil=ta,Telugu=te,Bengali=bn,Malayalam=ml,English=en}}",
             "headers": {
               "User-Agent": "{{ua}}",
               "Referer": "{{player}}/",
               "Origin": "{{player}}"
             }
           }
+        }
+      ]
+    },
+    {
+      "op": "foreach",
+      "in": "{{once}}",
+      "as": "unused",
+      "steps": [
+        {
+          "op": "get",
+          "url": "{{core}}/streams/languages/{{path}}",
+          "headers": {
+            "User-Agent": "{{ua}}",
+            "Referer": "{{player}}/",
+            "Origin": "{{player}}"
+          },
+          "response": "json",
+          "as": "list"
+        },
+        {
+          "op": "require",
+          "value": "{{list.languages}}",
+          "msg": "no language list"
+        },
+        {
+          "op": "foreach",
+          "in": "{{list.languages}}",
+          "as": "language",
+          "parallel": true,
+          "retryOnTimeout": 1,
+          "steps": [
+            {
+              "op": "get",
+              "url": "{{core}}/streams/{{path}}",
+              "query": {
+                "s": "v4:{{language}}"
+              },
+              "headers": {
+                "User-Agent": "{{ua}}",
+                "Referer": "{{player}}/",
+                "Origin": "{{player}}"
+              },
+              "response": "json",
+              "as": "reply"
+            },
+            {
+              "op": "require",
+              "value": "{{reply.url}}",
+              "msg": "language has no stream"
+            },
+            {
+              "op": "extract",
+              "from": "{{reply.url}}",
+              "regex": [
+                "\\.(mp4|mkv|webm)(?:\\?|$)"
+              ],
+              "as": "ext"
+            },
+            {
+              "op": "emit",
+              "when": {
+                "value": "{{reply.headers.Referer}}"
+              },
+              "stream": {
+                "title": "VidZee {{language}}",
+                "url": "{{reply.url}}",
+                "format": {
+                  "$first": [
+                    "{{ext | map:mp4=mp4,mkv=mp4,webm=mp4}}",
+                    "hls"
+                  ]
+                },
+                "lang": "{{reply.language | map:Hindi=hi,Tamil=ta,Telugu=te,Bengali=bn,Malayalam=ml,English=en}}",
+                "headers": {
+                  "User-Agent": "{{ua}}",
+                  "Referer": "{{reply.headers.Referer}}"
+                }
+              }
+            },
+            {
+              "op": "emit",
+              "when": {
+                "value": "{{reply.headers.Referer}}",
+                "not": true
+              },
+              "stream": {
+                "title": "VidZee {{language}}",
+                "url": "{{reply.url}}",
+                "format": {
+                  "$first": [
+                    "{{ext | map:mp4=mp4,mkv=mp4,webm=mp4}}",
+                    "hls"
+                  ]
+                },
+                "lang": "{{reply.language | map:Hindi=hi,Tamil=ta,Telugu=te,Bengali=bn,Malayalam=ml,English=en}}",
+                "headers": {
+                  "User-Agent": "{{ua}}",
+                  "Referer": "{{player}}/",
+                  "Origin": "{{player}}"
+                }
+              }
+            }
+          ]
         }
       ]
     }
