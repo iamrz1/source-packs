@@ -6,7 +6,7 @@ This is a public resource for learning how these request chains work. It is base
 
 ## What is in a pack
 
-`pack.json` holds one recipe per provider (`cinejoy`, `moviebox`, `notorrent`, `vidcore`, `vidfast`, `videasy`, `vidlink`, `vidspark`, `vidup`, `vidzee`, `vixsrc`), the pack `version` and the credits. It is attached to every [release](../../releases), with `pack.json.sha256`.
+`pack.json` holds one recipe per provider (`allmovieland`, `cinejoy`, `hdhub`, `moviebox`, `notorrent`, `vidcore`, `vidfast`, `videasy`, `vidlink`, `vidspark`, `vidup`, `vidzee`, `vixsrc`), the pack `version` and the credits. It is attached to every [release](../../releases), with `pack.json.sha256`.
 
 A recipe is plain JSON: variables and a list of steps (`get`, `post`, `extract`, `foreach`, `emit`, ...). See [docs/RECIPE_SPEC.md](docs/RECIPE_SPEC.md). A recipe only describes requests. Ranking, timeouts and which provider is enabled stay in the app.
 

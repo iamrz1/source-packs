@@ -1,0 +1,245 @@
+{
+  "id": "hdhub",
+  "name": "HdHub",
+  "requires": 4,
+  "description": "Hindi dual-audio MKV files from the public HdHub addon, kept only when the file says Hindi",
+  "rank": 130,
+  "credits": [
+    {
+      "author": "TheVolecitor",
+      "project": "HdHub (Stremio addon)",
+      "url": "https://hdhub.thevolecitor.qzz.io",
+      "source": "GET /{config}/stream/{type}/{id}.json, read from the live replies",
+      "license": "none stated (hosted service; its code is not public, so only the endpoint shape is used)",
+      "note": "The addon answers the standard Stremio stream request. The config segment is the base64 of {\"torbox\":\"unset\",\"qualities\":\"2160p,1080p,720p\",\"sort\":\"desc\"}. Only direct file links on PixelDrain and the signed R2 host are kept; the HubCloud links end on a third-party worker that refused every request."
+    }
+  ],
+  "liveSamples": {
+    "movie": {
+      "type": "movie",
+      "id": "tt15398776",
+      "tmdb": "872585",
+      "title": "Oppenheimer",
+      "year": "2023"
+    },
+    "episode": {
+      "type": "series",
+      "id": "tt4574334:1:1",
+      "tmdb": "66732",
+      "title": "Stranger Things",
+      "year": "2016"
+    }
+  },
+  "vars": {
+    "base": "https://hdhub.thevolecitor.qzz.io",
+    "config": "eyJ0b3Jib3giOiJ1bnNldCIsInF1YWxpdGllcyI6IjIxNjBwLDEwODBwLDcyMHAiLCJzb3J0IjoiZGVzYyJ9",
+    "kinds": [
+      "pixeldrain",
+      "r2"
+    ],
+    "heights": [
+      2160,
+      1080,
+      720
+    ]
+  },
+  "steps": [
+    {
+      "op": "require",
+      "value": "{{id | prefix:'tt'}}",
+      "msg": "needs an imdb id"
+    },
+    {
+      "op": "set",
+      "as": "kind",
+      "value": "movie"
+    },
+    {
+      "op": "set",
+      "as": "kind",
+      "value": "series",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "want",
+      "value": ""
+    },
+    {
+      "op": "set",
+      "as": "want",
+      "value": "s{{id | split:':' | at:1 | map:1=01,2=02,3=03,4=04,5=05,6=06,7=07,8=08,9=09}}e{{id | split:':' | at:2 | map:1=01,2=02,3=03,4=04,5=05,6=06,7=07,8=08,9=09}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "needShow",
+      "value": ""
+    },
+    {
+      "op": "set",
+      "as": "needShow",
+      "value": "{{title | trim}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "get",
+      "url": "{{base}}/{{config}}/stream/{{kind}}/{{id}}.json",
+      "response": "json",
+      "as": "reply"
+    },
+    {
+      "op": "require",
+      "value": "{{reply.streams}}",
+      "msg": "no files for this title"
+    },
+    {
+      "op": "foreach",
+      "in": "{{kinds}}",
+      "as": "host",
+      "steps": [
+        {
+          "op": "foreach",
+          "in": "{{heights}}",
+          "as": "tier",
+          "steps": [
+            {
+              "op": "tryEach",
+              "in": "{{reply.streams}}",
+              "as": "item",
+              "steps": [
+                {
+                  "op": "require",
+                  "value": "{{item.url}}",
+                  "msg": "notice, not a file"
+                },
+                {
+                  "op": "extract",
+                  "from": "{{item.url}}",
+                  "regex": [
+                    "^https://(pixeldrain)\\.(?:dev|com)/api/file/",
+                    "^https://[0-9a-f]+\\.(r2)\\.cloudflarestorage\\.com/"
+                  ],
+                  "as": "found"
+                },
+                {
+                  "op": "require",
+                  "value": "{{found}}",
+                  "equals": "{{host}}",
+                  "msg": "another host"
+                },
+                {
+                  "op": "extract",
+                  "from": "{{item.name}}",
+                  "regex": [
+                    "(\\d{3,4})p",
+                    "(4K)"
+                  ],
+                  "as": "quality"
+                },
+                {
+                  "op": "require",
+                  "value": "{{quality | height}}",
+                  "equals": "{{tier}}",
+                  "msg": "another quality"
+                },
+                {
+                  "op": "extract",
+                  "from": "{{item.description | lower}}",
+                  "regex": "(hindi|[ ._\\[-]hin[ ._\\]-])",
+                  "as": "hindi"
+                },
+                {
+                  "op": "require",
+                  "value": "{{hindi}}",
+                  "msg": "the file does not say Hindi"
+                },
+                {
+                  "op": "extract",
+                  "from": "{{item.description | lower}}",
+                  "regex": "([a-z0-9]+)[ ._-]+(?:\\(\\d{4}\\)[ ._-]+)?s\\d{1,3}e\\d{1,3}(?![0-9])",
+                  "as": "lastWord",
+                  "when": {
+                    "value": "{{type}}",
+                    "equals": "series"
+                  }
+                },
+                {
+                  "op": "extract",
+                  "from": "{{item.description | lower}}",
+                  "regex": "(?:^|[^a-z0-9])(s\\d{1,3}e\\d{1,3})(?![0-9])",
+                  "as": "code",
+                  "when": {
+                    "value": "{{type}}",
+                    "equals": "series"
+                  }
+                },
+                {
+                  "op": "require",
+                  "value": "{{code}}",
+                  "equals": "{{want}}",
+                  "msg": "another episode",
+                  "when": {
+                    "value": "{{type}}",
+                    "equals": "series"
+                  }
+                },
+                {
+                  "op": "emit",
+                  "stream": {
+                    "title": "HdHub {{host | map:pixeldrain=PixelDrain,r2=FSL}} Hindi",
+                    "url": "{{item.url}}",
+                    "format": "mp4",
+                    "height": "{{quality | height}}",
+                    "lang": "hi",
+                    "size": "{{item.behaviorHints.videoSize}}"
+                  },
+                  "when": {
+                    "value": "{{needShow}}",
+                    "not": true
+                  }
+                },
+                {
+                  "op": "tryEach",
+                  "in": "{{needShow | lower | split:' '}}",
+                  "as": "word",
+                  "when": {
+                    "value": "{{needShow}}"
+                  },
+                  "steps": [
+                    {
+                      "op": "require",
+                      "value": "{{word}}",
+                      "equals": "{{lastWord}}",
+                      "msg": "the file is for another show"
+                    },
+                    {
+                      "op": "emit",
+                      "stream": {
+                        "title": "HdHub {{host | map:pixeldrain=PixelDrain,r2=FSL}} Hindi",
+                        "url": "{{item.url}}",
+                        "format": "mp4",
+                        "height": "{{quality | height}}",
+                        "lang": "hi",
+                        "size": "{{item.behaviorHints.videoSize}}"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

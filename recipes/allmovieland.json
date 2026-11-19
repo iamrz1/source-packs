@@ -1,0 +1,222 @@
+{
+  "id": "allmovieland",
+  "name": "AllMovieLand",
+  "requires": 4,
+  "description": "HLS from the Hindi voice track of the AllMovieLand player, only for titles that list a Hindi voice",
+  "rank": 140,
+  "credits": [
+    {
+      "author": "SaurabhKaperwan",
+      "project": "CSX (CineStream)",
+      "url": "https://github.com/SaurabhKaperwan/CSX",
+      "source": "CineStream/src/main/kotlin/com/megix/CineStreamExtractors.kt (invokeAllmovieland)",
+      "license": "none stated (the endpoint chain was learned from it and re-checked live; no code is copied)",
+      "note": "The player host comes from allmovieland.link/player.js. The play page of that host holds a JSON object with the playlist link and a key that is sent back as X-CSRF-TOKEN. The voice list depends on the viewer's region, so a title can list Hindi in one country and not in another."
+    }
+  ],
+  "vars": {
+    "api": "https://allmovieland.link",
+    "site": "https://allmovieland.one/",
+    "voice": "Hindi"
+  },
+  "steps": [
+    {
+      "op": "set",
+      "as": "imdb",
+      "value": "{{id | split:':' | at:0}}"
+    },
+    {
+      "op": "require",
+      "value": "{{imdb | prefix:'tt'}}",
+      "msg": "needs an imdb id"
+    },
+    {
+      "op": "set",
+      "as": "season",
+      "value": "{{id | split:':' | at:1}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "set",
+      "as": "episode",
+      "value": "{{id | split:':' | at:2}}",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      }
+    },
+    {
+      "op": "get",
+      "url": "{{api}}/player.js",
+      "query": {
+        "v": "60 128"
+      },
+      "as": "playerJs"
+    },
+    {
+      "op": "extract",
+      "from": "{{playerJs}}",
+      "regex": "const AwsIndStreamDomain\\s*=\\s*'(https?://[^/']+)",
+      "as": "host"
+    },
+    {
+      "op": "require",
+      "value": "{{host}}",
+      "msg": "no player host"
+    },
+    {
+      "op": "get",
+      "url": "{{host}}/play/{{imdb}}",
+      "headers": {
+        "Referer": "{{site}}"
+      },
+      "as": "page"
+    },
+    {
+      "op": "extract",
+      "from": "{{page}}",
+      "regex": "(\\{\"file\":[^\\n]*?\\})\\s*;",
+      "as": "blob"
+    },
+    {
+      "op": "set",
+      "as": "player",
+      "value": "{{blob | json}}"
+    },
+    {
+      "op": "require",
+      "value": "{{player.file}}",
+      "msg": "no playlist for this title"
+    },
+    {
+      "op": "require",
+      "value": "{{player.key}}",
+      "msg": "no playlist key"
+    },
+    {
+      "op": "get",
+      "url": {
+        "$first": [
+          "{{player.file | prefix:'http'}}",
+          "{{host}}{{player.file}}"
+        ]
+      },
+      "headers": {
+        "X-CSRF-TOKEN": "{{player.key}}",
+        "Referer": "{{site}}"
+      },
+      "response": "json",
+      "as": "servers"
+    },
+    {
+      "op": "require",
+      "value": "{{servers}}",
+      "msg": "no voices"
+    },
+    {
+      "op": "foreach",
+      "in": "{{servers}}",
+      "as": "entry",
+      "when": {
+        "value": "{{type}}",
+        "equals": "movie"
+      },
+      "steps": [
+        {
+          "op": "require",
+          "value": "{{entry.title}}",
+          "equals": "{{voice}}",
+          "msg": "another voice"
+        },
+        {
+          "op": "post",
+          "url": "{{host}}/playlist/{{entry.file}}.txt",
+          "headers": {
+            "X-CSRF-TOKEN": "{{player.key}}",
+            "Referer": "{{site}}"
+          },
+          "as": "link"
+        },
+        {
+          "op": "emit",
+          "stream": {
+            "title": "AllMovieLand {{voice}}",
+            "url": "{{link | trim | prefix:'http'}}",
+            "format": "hls",
+            "lang": "hi",
+            "headers": {
+              "Referer": "{{site}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "op": "foreach",
+      "in": "{{servers}}",
+      "as": "seasonEntry",
+      "when": {
+        "value": "{{type}}",
+        "equals": "series"
+      },
+      "steps": [
+        {
+          "op": "require",
+          "value": "{{seasonEntry.id}}",
+          "equals": "{{season}}",
+          "msg": "another season"
+        },
+        {
+          "op": "foreach",
+          "in": "{{seasonEntry.folder}}",
+          "as": "episodeEntry",
+          "steps": [
+            {
+              "op": "require",
+              "value": "{{episodeEntry.episode}}",
+              "equals": "{{episode}}",
+              "msg": "another episode"
+            },
+            {
+              "op": "foreach",
+              "in": "{{episodeEntry.folder}}",
+              "as": "entry",
+              "steps": [
+                {
+                  "op": "require",
+                  "value": "{{entry.title}}",
+                  "equals": "{{voice}}",
+                  "msg": "another voice"
+                },
+                {
+                  "op": "post",
+                  "url": "{{host}}/playlist/{{entry.file}}.txt",
+                  "headers": {
+                    "X-CSRF-TOKEN": "{{player.key}}",
+                    "Referer": "{{site}}"
+                  },
+                  "as": "link"
+                },
+                {
+                  "op": "emit",
+                  "stream": {
+                    "title": "AllMovieLand {{voice}}",
+                    "url": "{{link | trim | prefix:'http'}}",
+                    "format": "hls",
+                    "lang": "hi",
+                    "headers": {
+                      "Referer": "{{site}}"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
