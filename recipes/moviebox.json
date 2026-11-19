@@ -1,8 +1,8 @@
 {
   "id": "moviebox",
   "name": "MovieBox",
-  "requires": 3,
-  "description": "English MP4 files with quality labels and subtitles, only for titles in the MovieBox catalog",
+  "requires": 4,
+  "description": "MP4 files in several qualities, English audio with subtitles, plus the Hindi dub when the title has one",
   "rank": 70,
   "credits": [
     {
@@ -35,7 +35,10 @@
     "host": "moviebox.ph",
     "site": "https://moviebox.ph",
     "clientInfo": "{\"timezone\":\"Asia/Dhaka\"}",
-    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+    "once": [
+      "x"
+    ]
   },
   "steps": [
     {
@@ -221,116 +224,61 @@
       "msg": "search found nothing"
     },
     {
-      "op": "tryEach",
-      "in": "{{found.data.items}}",
-      "as": "hit",
+      "op": "foreach",
+      "in": "{{once}}",
+      "as": "unused",
       "steps": [
         {
-          "op": "require",
-          "value": "{{hit.hasResource}}",
-          "msg": "hit has no stream"
-        },
-        {
-          "op": "require",
-          "value": "{{hit.subjectType}}",
-          "equals": "{{typeCode}}",
-          "msg": "hit is the other type"
-        },
-        {
-          "op": "extract",
-          "from": "{{hit.title}}",
-          "regex": [
-            "^(.*?)\\s+S\\d+(?:-S\\d+)?$",
-            "^(.*)$"
-          ],
-          "as": "name"
-        },
-        {
-          "op": "require",
-          "value": "{{name | lower | trim}}",
-          "equals": "{{want}}",
-          "msg": "hit has another title"
-        },
-        {
-          "op": "require",
-          "value": "{{hit.releaseDate | split:'-' | at:0}}",
-          "equals": "{{wantYear}}",
-          "msg": "hit is from another year",
-          "when": {
-            "value": "{{wantYear}}"
-          }
-        },
-        {
-          "op": "set",
-          "as": "referer",
-          "value": "{{domain}}/spa/videoPlayPage/movies/{{hit.detailPath}}?id={{hit.subjectId}}&type=/movie/detail&detailSe={{season}}&detailEp={{episode}}&lang=en"
-        },
-        {
-          "op": "get",
-          "url": "{{api}}/subject/play",
-          "query": {
-            "subjectId": "{{hit.subjectId}}",
-            "se": "{{season}}",
-            "ep": "{{episode}}",
-            "detailPath": "{{hit.detailPath}}",
-            "host": "{{host}}"
-          },
-          "headers": {
-            "User-Agent": "{{ua}}",
-            "Referer": "{{referer}}",
-            "Authorization": "Bearer {{token}}"
-          },
-          "response": "json",
-          "as": "play"
-        },
-        {
-          "op": "require",
-          "value": "{{play.data.streams}}",
-          "msg": "no streams for this episode"
-        },
-        {
-          "op": "foreach",
-          "in": "{{play.data.streams}}",
-          "as": "src",
+          "op": "tryEach",
+          "in": "{{found.data.items}}",
+          "as": "hit",
           "steps": [
             {
-              "op": "emit",
-              "stream": {
-                "title": "{{src.resolutions}}p MP4",
-                "url": "{{src.url}}",
-                "format": "mp4",
-                "height": "{{src.resolutions | height}}",
-                "headers": {
-                  "User-Agent": "{{ua}}",
-                  "Accept": "*/*",
-                  "Accept-Language": "en-US,en;q=0.9",
-                  "X-Client-Info": "{{clientInfo}}",
-                  "sec-ch-ua": "\"Chromium\";v=\"148\", \"Google Chrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
-                  "sec-ch-ua-mobile": "?0",
-                  "sec-ch-ua-platform": "\"Windows\"",
-                  "sec-fetch-dest": "empty",
-                  "sec-fetch-mode": "cors",
-                  "sec-fetch-site": "same-origin",
-                  "Referer": "{{referer}}"
-                }
+              "op": "require",
+              "value": "{{hit.hasResource}}",
+              "msg": "hit has no stream"
+            },
+            {
+              "op": "require",
+              "value": "{{hit.subjectType}}",
+              "equals": "{{typeCode}}",
+              "msg": "hit is the other type"
+            },
+            {
+              "op": "extract",
+              "from": "{{hit.title}}",
+              "regex": [
+                "^(.*?)\\s*\\[Hindi\\](?:\\s+S\\d+(?:-S\\d+)?)?$"
+              ],
+              "as": "name"
+            },
+            {
+              "op": "require",
+              "value": "{{name | lower | trim}}",
+              "equals": "{{want}}",
+              "msg": "no Hindi dub of this title"
+            },
+            {
+              "op": "require",
+              "value": "{{hit.releaseDate | split:'-' | at:0}}",
+              "equals": "{{wantYear}}",
+              "msg": "hit is from another year",
+              "when": {
+                "value": "{{wantYear}}"
               }
-            }
-          ]
-        },
-        {
-          "op": "foreach",
-          "in": [
-            "{{play.data.streams.0.id}}"
-          ],
-          "as": "streamId",
-          "steps": [
+            },
+            {
+              "op": "set",
+              "as": "referer",
+              "value": "{{domain}}/spa/videoPlayPage/movies/{{hit.detailPath}}?id={{hit.subjectId}}&type=/movie/detail&detailSe={{season}}&detailEp={{episode}}&lang=en"
+            },
             {
               "op": "get",
-              "url": "{{api}}/subject/caption",
+              "url": "{{api}}/subject/play",
               "query": {
-                "format": "MP4",
-                "id": "{{streamId}}",
                 "subjectId": "{{hit.subjectId}}",
+                "se": "{{season}}",
+                "ep": "{{episode}}",
                 "detailPath": "{{hit.detailPath}}",
                 "host": "{{host}}"
               },
@@ -340,19 +288,187 @@
                 "Authorization": "Bearer {{token}}"
               },
               "response": "json",
-              "as": "caps"
+              "as": "play"
+            },
+            {
+              "op": "require",
+              "value": "{{play.data.streams}}",
+              "msg": "no streams for this episode"
             },
             {
               "op": "foreach",
-              "in": "{{caps.data.captions}}",
-              "as": "cap",
+              "in": "{{play.data.streams}}",
+              "as": "src",
               "steps": [
                 {
                   "op": "emit",
-                  "subtitle": {
-                    "url": "{{cap.url}}",
-                    "lang": "{{cap.lan | lower}}"
+                  "stream": {
+                    "title": "{{src.resolutions}}p MP4 Hindi",
+                    "url": "{{src.url}}",
+                    "format": "mp4",
+                    "height": "{{src.resolutions | height}}",
+                    "headers": {
+                      "User-Agent": "{{ua}}",
+                      "Accept": "*/*",
+                      "Accept-Language": "en-US,en;q=0.9",
+                      "X-Client-Info": "{{clientInfo}}",
+                      "sec-ch-ua": "\"Chromium\";v=\"148\", \"Google Chrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+                      "sec-ch-ua-mobile": "?0",
+                      "sec-ch-ua-platform": "\"Windows\"",
+                      "sec-fetch-dest": "empty",
+                      "sec-fetch-mode": "cors",
+                      "sec-fetch-site": "same-origin",
+                      "Referer": "{{referer}}"
+                    },
+                    "lang": "hi"
                   }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "op": "foreach",
+      "in": "{{once}}",
+      "as": "unused",
+      "steps": [
+        {
+          "op": "tryEach",
+          "in": "{{found.data.items}}",
+          "as": "hit",
+          "steps": [
+            {
+              "op": "require",
+              "value": "{{hit.hasResource}}",
+              "msg": "hit has no stream"
+            },
+            {
+              "op": "require",
+              "value": "{{hit.subjectType}}",
+              "equals": "{{typeCode}}",
+              "msg": "hit is the other type"
+            },
+            {
+              "op": "extract",
+              "from": "{{hit.title}}",
+              "regex": [
+                "^(.*?)\\s+S\\d+(?:-S\\d+)?$",
+                "^(.*)$"
+              ],
+              "as": "name"
+            },
+            {
+              "op": "require",
+              "value": "{{name | lower | trim}}",
+              "equals": "{{want}}",
+              "msg": "hit has another title"
+            },
+            {
+              "op": "require",
+              "value": "{{hit.releaseDate | split:'-' | at:0}}",
+              "equals": "{{wantYear}}",
+              "msg": "hit is from another year",
+              "when": {
+                "value": "{{wantYear}}"
+              }
+            },
+            {
+              "op": "set",
+              "as": "referer",
+              "value": "{{domain}}/spa/videoPlayPage/movies/{{hit.detailPath}}?id={{hit.subjectId}}&type=/movie/detail&detailSe={{season}}&detailEp={{episode}}&lang=en"
+            },
+            {
+              "op": "get",
+              "url": "{{api}}/subject/play",
+              "query": {
+                "subjectId": "{{hit.subjectId}}",
+                "se": "{{season}}",
+                "ep": "{{episode}}",
+                "detailPath": "{{hit.detailPath}}",
+                "host": "{{host}}"
+              },
+              "headers": {
+                "User-Agent": "{{ua}}",
+                "Referer": "{{referer}}",
+                "Authorization": "Bearer {{token}}"
+              },
+              "response": "json",
+              "as": "play"
+            },
+            {
+              "op": "require",
+              "value": "{{play.data.streams}}",
+              "msg": "no streams for this episode"
+            },
+            {
+              "op": "foreach",
+              "in": "{{play.data.streams}}",
+              "as": "src",
+              "steps": [
+                {
+                  "op": "emit",
+                  "stream": {
+                    "title": "{{src.resolutions}}p MP4",
+                    "url": "{{src.url}}",
+                    "format": "mp4",
+                    "height": "{{src.resolutions | height}}",
+                    "headers": {
+                      "User-Agent": "{{ua}}",
+                      "Accept": "*/*",
+                      "Accept-Language": "en-US,en;q=0.9",
+                      "X-Client-Info": "{{clientInfo}}",
+                      "sec-ch-ua": "\"Chromium\";v=\"148\", \"Google Chrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+                      "sec-ch-ua-mobile": "?0",
+                      "sec-ch-ua-platform": "\"Windows\"",
+                      "sec-fetch-dest": "empty",
+                      "sec-fetch-mode": "cors",
+                      "sec-fetch-site": "same-origin",
+                      "Referer": "{{referer}}"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "op": "foreach",
+              "in": [
+                "{{play.data.streams.0.id}}"
+              ],
+              "as": "streamId",
+              "steps": [
+                {
+                  "op": "get",
+                  "url": "{{api}}/subject/caption",
+                  "query": {
+                    "format": "MP4",
+                    "id": "{{streamId}}",
+                    "subjectId": "{{hit.subjectId}}",
+                    "detailPath": "{{hit.detailPath}}",
+                    "host": "{{host}}"
+                  },
+                  "headers": {
+                    "User-Agent": "{{ua}}",
+                    "Referer": "{{referer}}",
+                    "Authorization": "Bearer {{token}}"
+                  },
+                  "response": "json",
+                  "as": "caps"
+                },
+                {
+                  "op": "foreach",
+                  "in": "{{caps.data.captions}}",
+                  "as": "cap",
+                  "steps": [
+                    {
+                      "op": "emit",
+                      "subtitle": {
+                        "url": "{{cap.url}}",
+                        "lang": "{{cap.lan | lower}}"
+                      }
+                    }
+                  ]
                 }
               ]
             }
