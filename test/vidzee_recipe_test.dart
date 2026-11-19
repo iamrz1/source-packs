@@ -47,7 +47,10 @@ void main() {
       const {'type': 'series', 'id': 'tt0944947:2:5', 'tmdb': '1399'},
     );
 
-    expect(seen.toSet(), {'/streams/tv/1399/2/5'});
+    expect(seen.toSet(), {
+      '/streams/tv/1399/2/5',
+      '/streams/languages/tv/1399/2/5',
+    });
     expect(result.streams.map((s) => s.format).toSet(), {'mp4'});
   });
 
@@ -59,5 +62,38 @@ void main() {
 
     expect(result.error, isNotNull);
     expect(result.streams, isEmpty);
+  });
+
+  test('a language list adds one labelled stream per language, with the '
+      'headers the reply asks for', () async {
+    final result = await run(
+      'vidzee',
+      (Seen r) {
+        final path = r.url.path;
+        if (path.startsWith('/streams/languages/')) {
+          return okJson({
+            'languages': ['Hindi', 'Tamil'],
+          });
+        }
+        final server = r.url.queryParameters['s'] ?? '';
+        if (server.startsWith('v4:')) {
+          final language = server.substring(3);
+          return okJson({
+            'language': language,
+            'url': 'https://cdn/$language.m3u8',
+            'headers': {'Referer': 'https://cdn/'},
+          });
+        }
+        return status(502);
+      },
+      const {'type': 'movie', 'id': 'tt0133093', 'tmdb': '603'},
+    );
+
+    expect(
+      result.streams.map((s) => '${s.title}:${s.lang}'),
+      unorderedEquals(['VidZee Hindi:hi', 'VidZee Tamil:ta']),
+    );
+    expect(result.streams.first.headers['Referer'], 'https://cdn/');
+    expect(result.streams.first.headers.containsKey('Origin'), isFalse);
   });
 }
