@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/iamrz1/source-packs/compare/v1.3.0...v1.4.0) (2026-11-19)
+
+
+### Features
+
+* **recipes:** add vidup, vidzee and vidspark, disable vidcore, vidfast and videasy by default ([#13](https://github.com/iamrz1/source-packs/issues/13)) ([8c9c8cc](https://github.com/iamrz1/source-packs/commit/8c9c8cc0f738ca985f200a3e6c8586fff1a42986))
+
 ## [1.3.0](https://github.com/iamrz1/source-packs/compare/v1.2.0...v1.3.0) (2026-11-19)
 
 
