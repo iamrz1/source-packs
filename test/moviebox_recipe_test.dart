@@ -136,8 +136,9 @@ void main() {
     }
   });
 
-  test('an episode picks the plain series item, not a dub or a movie',
-      () async {
+  test(
+      'an episode uses the plain series item and the Hindi series dub, '
+      'never the movie', () async {
     final http = FakeHttp(
       happy(items: [
         item('Rick and Morty [Hindi] S1-S9', '2013-12-02', type: 2, id: '1'),
@@ -152,14 +153,51 @@ void main() {
       'year': '2013',
     });
 
-    expect(result.streams, hasLength(2));
     final search = http.seen.firstWhere((r) => r.url.path.endsWith('/search'));
     expect(search.json['subjectType'], 2);
-    final play = http.seen.firstWhere((r) => r.url.path.endsWith('/play'));
-    expect(play.url.queryParameters['subjectId'], '3');
-    expect(play.url.queryParameters['se'], '1');
-    expect(play.url.queryParameters['ep'], '1');
-    expect(play.url.queryParameters['detailPath'], 'slug-3');
+    final plays = http.seen.where((r) => r.url.path.endsWith('/play')).toList();
+    expect(plays.map((r) => r.url.queryParameters['subjectId']), ['1', '3']);
+    expect(plays.every((r) => r.url.queryParameters['se'] == '1'), isTrue);
+    expect(plays.every((r) => r.url.queryParameters['ep'] == '1'), isTrue);
+    expect(result.streams.where((s) => s.lang == 'hi'), hasLength(2));
+    expect(result.streams.where((s) => s.lang.isEmpty), hasLength(2));
+  });
+
+  test(
+      'a movie with a Hindi dub adds Hindi streams, with no subtitles of '
+      'their own', () async {
+    final http = FakeHttp(
+      happy(
+        items: [
+          item('The Dark Knight', '2008-07-18', id: '10'),
+          item('The Dark Knight [Hindi]', '2008-07-18', id: '11'),
+          item('The Dark Knight [Hindi]', '1999-01-01', id: '12'),
+        ],
+      ),
+    );
+    final result =
+        await RecipeInterpreter(http).run(loadRecipe('moviebox'), movie);
+
+    expect(result.error, isNull);
+    final hindi = result.streams.where((s) => s.lang == 'hi').toList();
+    expect(hindi.map((s) => s.title), ['360p MP4 Hindi', '720p MP4 Hindi']);
+    expect(hindi.map((s) => s.height), [360, 720]);
+    expect(hindi.map((s) => s.format).toSet(), {'mp4'});
+    expect(result.streams.where((s) => s.lang.isEmpty), hasLength(2));
+    // Only the English entry brings captions, once; the dub of another year
+    // is not asked.
+    final plays = http.seen.where((r) => r.url.path.endsWith('/play')).toList();
+    expect(plays.map((r) => r.url.queryParameters['subjectId']), ['11', '10']);
+    expect(
+        http.seen.where((r) => r.url.path.endsWith('/caption')), hasLength(1));
+  });
+
+  test('a title with only a Hindi dub still gives the Hindi streams', () async {
+    final result = await RecipeInterpreter(FakeHttp(
+      happy(items: [item('The Dark Knight [Hindi]', '2008-07-18')]),
+    )).run(loadRecipe('moviebox'), movie);
+
+    expect(result.streams.map((s) => s.lang).toSet(), {'hi'});
   });
 
   test('a title that is not in the catalog gives nothing and no play call',
