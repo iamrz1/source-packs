@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/iamrz1/source-packs/compare/v1.4.1...v1.5.0) (2026-11-19)
+
+
+### Features
+
+* **recipes:** label vidzee audio by the site's own language list ([#17](https://github.com/iamrz1/source-packs/issues/17)) ([9603332](https://github.com/iamrz1/source-packs/commit/96033320d195d9e5894d3baeb641ed6e7e1f97ef))
+
 ## [1.4.1](https://github.com/iamrz1/source-packs/compare/v1.4.0...v1.4.1) (2026-11-19)
 
 
