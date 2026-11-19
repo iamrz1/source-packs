@@ -9,9 +9,9 @@ Usage: dart run bin/pack.dart <command>
   check                        Validate every recipe in recipes/.
   build --version X.Y.Z [--out dist]
                                Write pack.json.
-  live                         Run every recipe against the real sites with a
-                               sample movie and episode. Exits 1 when one gives
-                               no streams.
+  live [id ...]                Run every recipe, or only the listed ones,
+                               against the real sites with a sample movie and
+                               episode. Exits 1 when one gives no streams.
 ''';
 
 List<Map<String, dynamic>> _recipes() {
@@ -50,7 +50,7 @@ Future<int> _run(List<String> args) async {
     case 'build':
       return _build(args.skip(1).toList());
     case 'live':
-      return _live();
+      return _live(args.skip(1).toSet());
     default:
       stderr.write(_usage);
       return 64;
@@ -99,7 +99,7 @@ int _build(List<String> args) {
   return 0;
 }
 
-Future<int> _live() async {
+Future<int> _live(Set<String> only) async {
   const samples = {
     'movie': {
       'type': 'movie',
@@ -118,6 +118,7 @@ Future<int> _live() async {
   };
   var failed = 0;
   for (final recipe in _recipes()) {
+    if (only.isNotEmpty && !only.contains(recipe['id'])) continue;
     // A recipe for a site with its own catalog may name titles that exist there.
     final own = (recipe['liveSamples'] as Map?)?.cast<String, dynamic>();
     for (final sample in (own ?? samples).entries) {

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'interpreter.dart' show recipeRuntimeLevel;
+import 'interpreter.dart' show maxRegexLength, recipeRuntimeLevel;
 import 'template.dart';
 
 /// Version of the pack layout. An app that reads a higher `schema` than it
@@ -43,7 +43,8 @@ List<String> validateRecipe(Map<String, dynamic> recipe) {
   if (steps is! List || steps.isEmpty) {
     problems.add('steps is missing');
   } else {
-    _validateSteps(steps, 'steps', problems);
+    final needed = recipe['requires'];
+    _validateSteps(steps, 'steps', problems, needed is int ? needed : 1);
   }
   final rank = recipe['rank'];
   if (rank != null && rank is! int) {
@@ -69,7 +70,15 @@ List<String> validateRecipe(Map<String, dynamic> recipe) {
   return problems;
 }
 
-void _validateSteps(List steps, String where, List<String> problems) {
+/// Stream fields that need runtime level 4.
+const _level4StreamFields = ['expiresAt', 'lang', 'size'];
+
+void _validateSteps(
+  List steps,
+  String where,
+  List<String> problems,
+  int level,
+) {
   for (var i = 0; i < steps.length; i++) {
     final step = steps[i];
     final at = '$where[$i]';
@@ -99,7 +108,13 @@ void _validateSteps(List steps, String where, List<String> problems) {
         final regex = step['regex'];
         for (final r in regex is List ? regex : [regex]) {
           try {
-            RegExp(r as String);
+            if ((r as String).length > maxRegexLength) {
+              problems.add(
+                '$at (extract): regex is longer than $maxRegexLength',
+              );
+              continue;
+            }
+            RegExp(r);
           } catch (_) {
             problems.add('$at (extract): bad regex "$r"');
           }
@@ -124,11 +139,19 @@ void _validateSteps(List steps, String where, List<String> problems) {
         if (inner is! List || inner.isEmpty) {
           problems.add('$at ($op): "steps" is missing');
         } else {
-          _validateSteps(inner, '$at.steps', problems);
+          _validateSteps(inner, '$at.steps', problems, level);
         }
       case 'emit':
-        if (step['stream'] is! Map && step['subtitle'] is! Map) {
+        final stream = step['stream'];
+        if (stream is! Map && step['subtitle'] is! Map) {
           problems.add('$at (emit): needs "stream" or "subtitle"');
+        }
+        if (stream is Map && level < 4) {
+          for (final field in _level4StreamFields) {
+            if (stream.containsKey(field)) {
+              problems.add('$at (emit): "$field" needs "requires": 4');
+            }
+          }
         }
       case 'log':
         need('message');

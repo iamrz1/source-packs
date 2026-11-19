@@ -13,12 +13,26 @@ class RecipeStream {
   /// Headers the player must send to fetch [url].
   final Map<String, String> headers;
 
+  /// When the link stops working, in unix seconds, or null when it does not
+  /// say. An app may run the recipe again before this time.
+  final int? expiresAt;
+
+  /// ISO 639-1 audio language such as `en`, `original` when the recipe says
+  /// the audio is the original one, or empty when unknown.
+  final String lang;
+
+  /// File size in bytes, or null when unknown.
+  final int? size;
+
   const RecipeStream({
     required this.title,
     required this.url,
     this.height,
     this.format,
     this.headers = const {},
+    this.expiresAt,
+    this.lang = '',
+    this.size,
   });
 
   @override
