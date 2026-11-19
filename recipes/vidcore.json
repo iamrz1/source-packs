@@ -3,6 +3,7 @@
   "name": "Vidcore",
   "description": "Multi-server HLS via enc-dec.app (slower, third-party)",
   "rank": 30,
+  "defaultEnabled": false,
   "credits": [
     {
       "author": "smy778",
