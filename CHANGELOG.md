@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/iamrz1/source-packs/compare/v1.4.0...v1.4.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* **recipes:** reorder the default sources ([#15](https://github.com/iamrz1/source-packs/issues/15)) ([ac7e3f3](https://github.com/iamrz1/source-packs/commit/ac7e3f3aa6cc8138bd2651e87a61c41627087171))
+
 ## [1.4.0](https://github.com/iamrz1/source-packs/compare/v1.3.0...v1.4.0) (2026-11-19)
 
 
