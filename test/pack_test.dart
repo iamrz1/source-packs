@@ -13,6 +13,7 @@ List<Map<String, dynamic>> recipes() => [
     ];
 
 const _ids = [
+  'allmovieland',
   'cinejoy',
   'hdhub',
   'moviebox',
@@ -39,6 +40,7 @@ void main() {
       for (final r in recipes()) {
         final credits = (r['credits'] as List).cast<Map>();
         const own = {
+          'allmovieland': 'https://github.com/SaurabhKaperwan/CSX',
           'hdhub': 'https://hdhub.thevolecitor.qzz.io',
           'moviebox': 'https://github.com/faisaljs/Moviebox-API',
           'notorrent': 'https://github.com/Stremio/stremio-addon-sdk',
@@ -124,6 +126,7 @@ void main() {
         'videasy',
         'vidfast',
         'hdhub',
+        'allmovieland',
       ]);
       expect(pack.infos.where((i) => !i.defaultEnabled).map((i) => i.id),
           ['vidcore', 'videasy', 'vidfast']);
@@ -165,6 +168,7 @@ void main() {
       expect(pack['published'], '2026-11-07T12:00:00.000Z');
       expect((pack['providers'] as Map).keys, _ids);
       expect((pack['credits'] as List).map((c) => c['author']), [
+        'SaurabhKaperwan',
         'smy778',
         'TheVolecitor',
         'faisaljs',
