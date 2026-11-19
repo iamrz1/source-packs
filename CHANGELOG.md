@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/iamrz1/source-packs/compare/v1.6.0...v1.7.0) (2026-11-19)
+
+
+### Features
+
+* **recipes:** add hdhub and allmovieland, two Hindi sources ([#22](https://github.com/iamrz1/source-packs/issues/22)) ([e29bc21](https://github.com/iamrz1/source-packs/commit/e29bc21abe9fffcd06de08beaf8b5873acd52f79))
+
 ## [1.6.0](https://github.com/iamrz1/source-packs/compare/v1.5.0...v1.6.0) (2026-11-19)
 
 
