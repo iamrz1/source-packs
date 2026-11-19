@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/iamrz1/source-packs/compare/v1.5.0...v1.6.0) (2026-11-19)
+
+
+### Features
+
+* **recipes:** add the Hindi dub of a moviebox title ([#20](https://github.com/iamrz1/source-packs/issues/20)) ([29fc64f](https://github.com/iamrz1/source-packs/commit/29fc64fc5467c4a84ba56f4df8de80930b2b0999))
+
 ## [1.5.0](https://github.com/iamrz1/source-packs/compare/v1.4.1...v1.5.0) (2026-11-19)
 
 
