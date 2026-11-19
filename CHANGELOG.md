@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.0](https://github.com/iamrz1/source-packs/compare/v1.2.0...v1.3.0) (2026-11-19)
+
+
+### Features
+
+* add the vixsrc and notorrent recipes, runtime level 4 ([e48f439](https://github.com/iamrz1/source-packs/commit/e48f4393afe2e088c4b8a272c2d4c289808a3d2b))
+* **recipes:** add vixsrc and notorrent ([0be4f82](https://github.com/iamrz1/source-packs/commit/0be4f82653355291b04a325dcd90897edd7c8549))
+* **runtime:** add expiresAt, lang and size to streams (level 4) ([8b9d785](https://github.com/iamrz1/source-packs/commit/8b9d7859557011c89f9065c41c4b3ad1fcdaefd2))
+
 ## [1.2.0](https://github.com/iamrz1/source-packs/compare/v1.1.1...v1.2.0) (2026-11-13)
 
 
