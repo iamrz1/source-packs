@@ -28,7 +28,7 @@ An app lists its sources from the recipes, so it needs no code per source. Four 
 
 `Pack.infos` returns these as `RecipeInfo` objects, already sorted by `rank`, then id.
 
-Ranks share one scale with the one source an app builds in: 10 is Torrentio with Real-Debrid. Recipes start at 20 and go up in steps of 10, so a new recipe fits between two others without renumbering. The current ranks are vixsrc 20, vidzee 30, vidlink 40, cinejoy 50, vidup 60, moviebox 70, vidspark 80, notorrent 90, vidcore 100, videasy 110 and vidfast 120. A recipe that should come last uses 130 or more.
+Ranks share one scale with the one source an app builds in: 10 is Torrentio with Real-Debrid. Recipes start at 20 and go up in steps of 10, so a new recipe fits between two others without renumbering. The current ranks are vixsrc 20, vidzee 30, vidlink 40, cinejoy 50, vidup 60, moviebox 70, vidspark 80, notorrent 90, vidcore 100, videasy 110, vidfast 120 and hdhub 130. A recipe that should come last uses 140 or more.
 
 These fields are plain top-level keys, so they need no new runtime level. A runtime that does not know them ignores them: it reads only `id`, `requires`, `vars` and `steps`, and `validateRecipe` does not reject unknown keys. A wrong type is reported by `validateRecipe` and is read as absent by `RecipeInfo`.
 
