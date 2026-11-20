@@ -133,6 +133,28 @@ void main() {
       expect(pack.infos.first.name, 'VixSrc');
     });
 
+    test('audio is multi or english, bad values are reported', () {
+      final base = {
+        'id': 'x',
+        'name': 'X',
+        'credits': [
+          {'author': 'a', 'url': 'https://u'},
+        ],
+        'steps': [
+          {'op': 'set', 'as': 'a', 'value': '1'},
+        ],
+      };
+      expect(RecipeInfo.fromRecipe('x', base).multilang, isFalse);
+      expect(RecipeInfo.fromRecipe('x', base).audio, 'english');
+      final multi = {...base, 'audio': 'multi'};
+      expect(validateRecipe(multi), isEmpty);
+      expect(RecipeInfo.fromRecipe('x', multi).multilang, isTrue);
+      expect(validateRecipe({...base, 'audio': 'english'}), isEmpty);
+      final bad = {...base, 'audio': 'hindi'};
+      expect(validateRecipe(bad).join('\n'), contains('audio must be'));
+      expect(RecipeInfo.fromRecipe('x', bad).multilang, isFalse);
+    });
+
     test('a recipe without a rank sorts last, a bad type is reported', () {
       final info = RecipeInfo.fromRecipe('x', {'id': 'x', 'name': 'X'});
       expect(info.rank, RecipeInfo.unranked);
