@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/iamrz1/source-packs/compare/v1.7.0...v1.8.0) (2026-11-20)
+
+
+### Features
+
+* **pack:** add an audio field to recipes, and reorder the default sources ([#24](https://github.com/iamrz1/source-packs/issues/24)) ([0cb6646](https://github.com/iamrz1/source-packs/commit/0cb664640de9582731fab80a9d1c5c4e1fcf276e))
+
 ## [1.7.0](https://github.com/iamrz1/source-packs/compare/v1.6.0...v1.7.0) (2026-11-19)
 
 
