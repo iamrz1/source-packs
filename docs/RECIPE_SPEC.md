@@ -19,16 +19,17 @@ A recipe is a JSON object:
 
 ## Metadata
 
-An app lists its sources from the recipes, so it needs no code per source. Four fields describe a recipe to the user:
+An app lists its sources from the recipes, so it needs no code per source. Five fields describe a recipe:
 
 - `name`: what the list shows.
 - `description` (optional): one plain sentence under the name.
 - `rank` (optional, a whole number): the default order. Lower comes first. A recipe without one comes after every ranked one, ordered by id.
 - `defaultEnabled` (optional, true or false): whether the source starts on. Default `true`. The user can switch it either way; a choice the user made is never overwritten by the pack.
+- `audio` (optional, `"multi"` or `"english"`): `multi` means the source offers several audio languages for one title; `english` is the default. An app whose user prefers a language other than English should look for a link in that language among the `multi` sources first, and only then fall back to the usual order.
 
-`Pack.infos` returns these as `RecipeInfo` objects, already sorted by `rank`, then id.
+`Pack.infos` returns these as `RecipeInfo` objects (with `audio` and `multilang`), already sorted by `rank`, then id.
 
-Ranks share one scale with the one source an app builds in: 10 is Torrentio with Real-Debrid. Recipes start at 20 and go up in steps of 10, so a new recipe fits between two others without renumbering. The current ranks are vixsrc 20, vidzee 30, vidlink 40, cinejoy 50, vidup 60, moviebox 70, vidspark 80, notorrent 90, vidcore 100, videasy 110, vidfast 120, hdhub 130 and allmovieland 140. A recipe that should come last uses 150 or more.
+Ranks share one scale with the one source an app builds in: 10 is Torrentio with Real-Debrid. Recipes start at 20 and go up in steps of 10, so a new recipe fits between two others without renumbering. The current ranks are vidlink 20, vidzee 30, allmovieland 40, vixsrc 50, cinejoy 60, vidup 70, moviebox 80, vidspark 90, then the ones that start off: hdhub 100, notorrent 110, vidcore 120, videasy 130 and vidfast 140. A source that starts off goes after every one that starts on. A recipe that should come last uses 150 or more.
 
 These fields are plain top-level keys, so they need no new runtime level. A runtime that does not know them ignores them: it reads only `id`, `requires`, `vars` and `steps`, and `validateRecipe` does not reject unknown keys. A wrong type is reported by `validateRecipe` and is read as absent by `RecipeInfo`.
 

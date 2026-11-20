@@ -54,6 +54,10 @@ List<String> validateRecipe(Map<String, dynamic> recipe) {
   if (enabled != null && enabled is! bool) {
     problems.add('defaultEnabled must be true or false');
   }
+  final audio = recipe['audio'];
+  if (audio != null && audio != 'multi' && audio != 'english') {
+    problems.add('audio must be "multi" or "english"');
+  }
   final description = recipe['description'];
   if (description != null && description is! String) {
     problems.add('description must be text');
@@ -212,12 +216,19 @@ class RecipeInfo {
   /// Whether the source starts on, before the user changes it.
   final bool defaultEnabled;
 
+  /// `multi` (several audio languages) or `english` (the default).
+  final String audio;
+
+  /// Whether the source offers several audio languages.
+  bool get multilang => audio == 'multi';
+
   const RecipeInfo({
     required this.id,
     required this.name,
     this.description = '',
     this.rank = unranked,
     this.defaultEnabled = true,
+    this.audio = 'english',
   });
 
   /// Reads the metadata of [recipe]. A field of the wrong type counts as
@@ -227,12 +238,14 @@ class RecipeInfo {
     final description = recipe['description'];
     final rank = recipe['rank'];
     final enabled = recipe['defaultEnabled'];
+    final audio = recipe['audio'];
     return RecipeInfo(
       id: id,
       name: name is String && name.trim().isNotEmpty ? name : id,
       description: description is String ? description : '',
       rank: rank is int ? rank : unranked,
       defaultEnabled: enabled is bool ? enabled : true,
+      audio: audio == 'multi' ? 'multi' : 'english',
     );
   }
 }

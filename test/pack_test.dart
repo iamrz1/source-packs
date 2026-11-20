@@ -108,29 +108,50 @@ void main() {
   });
 
   group('recipe metadata', () {
-    test('lists the shipped recipes by rank, vidcore, videasy and vidfast off',
-        () {
+    test('lists the shipped recipes by rank, the disabled ones last', () {
       final pack = Pack.parse(encodePack(buildPack(recipes(),
           version: '1.0.0', published: DateTime.utc(2026))));
 
       expect(pack.infos.map((i) => i.id), [
-        'vixsrc',
-        'vidzee',
         'vidlink',
+        'vidzee',
+        'allmovieland',
+        'vixsrc',
         'cinejoy',
         'vidup',
         'moviebox',
         'vidspark',
+        'hdhub',
         'notorrent',
         'vidcore',
         'videasy',
         'vidfast',
-        'hdhub',
-        'allmovieland',
       ]);
       expect(pack.infos.where((i) => !i.defaultEnabled).map((i) => i.id),
-          ['vidcore', 'videasy', 'vidfast']);
-      expect(pack.infos.first.name, 'VixSrc');
+          ['hdhub', 'notorrent', 'vidcore', 'videasy', 'vidfast']);
+      expect(pack.infos.first.name, 'VidLink');
+    });
+
+    test('audio is multi or english, bad values are reported', () {
+      final base = {
+        'id': 'x',
+        'name': 'X',
+        'credits': [
+          {'author': 'a', 'url': 'https://u'},
+        ],
+        'steps': [
+          {'op': 'set', 'as': 'a', 'value': '1'},
+        ],
+      };
+      expect(RecipeInfo.fromRecipe('x', base).multilang, isFalse);
+      expect(RecipeInfo.fromRecipe('x', base).audio, 'english');
+      final multi = {...base, 'audio': 'multi'};
+      expect(validateRecipe(multi), isEmpty);
+      expect(RecipeInfo.fromRecipe('x', multi).multilang, isTrue);
+      expect(validateRecipe({...base, 'audio': 'english'}), isEmpty);
+      final bad = {...base, 'audio': 'hindi'};
+      expect(validateRecipe(bad).join('\n'), contains('audio must be'));
+      expect(RecipeInfo.fromRecipe('x', bad).multilang, isFalse);
     });
 
     test('a recipe without a rank sorts last, a bad type is reported', () {

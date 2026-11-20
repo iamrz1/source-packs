@@ -3,7 +3,7 @@
   "name": "VixSrc",
   "requires": 4,
   "description": "Resolves an HLS master playlist with English audio and subtitles from vixsrc.to. Needs a TMDB id. The link is signed and expires.",
-  "rank": 20,
+  "rank": 50,
   "credits": [
     {
       "author": "vixsrc.to",

@@ -3,7 +3,8 @@
   "name": "AllMovieLand",
   "requires": 4,
   "description": "HLS from the Hindi voice track of the AllMovieLand player, only for titles that list a Hindi voice",
-  "rank": 140,
+  "rank": 40,
+  "audio": "multi",
   "credits": [
     {
       "author": "SaurabhKaperwan",
