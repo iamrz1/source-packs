@@ -3,7 +3,9 @@
   "name": "NoTorrent",
   "requires": 4,
   "description": "Plays the HTTP and HLS links of the NoTorrent Stremio addon. Many entries are Spanish or Latin American dubs.",
-  "rank": 90,
+  "rank": 110,
+  "defaultEnabled": false,
+  "audio": "multi",
   "credits": [
     {
       "author": "Stremio",

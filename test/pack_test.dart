@@ -108,29 +108,28 @@ void main() {
   });
 
   group('recipe metadata', () {
-    test('lists the shipped recipes by rank, vidcore, videasy and vidfast off',
-        () {
+    test('lists the shipped recipes by rank, the disabled ones last', () {
       final pack = Pack.parse(encodePack(buildPack(recipes(),
           version: '1.0.0', published: DateTime.utc(2026))));
 
       expect(pack.infos.map((i) => i.id), [
-        'vixsrc',
-        'vidzee',
         'vidlink',
+        'vidzee',
+        'allmovieland',
+        'vixsrc',
         'cinejoy',
         'vidup',
         'moviebox',
         'vidspark',
+        'hdhub',
         'notorrent',
         'vidcore',
         'videasy',
         'vidfast',
-        'hdhub',
-        'allmovieland',
       ]);
       expect(pack.infos.where((i) => !i.defaultEnabled).map((i) => i.id),
-          ['vidcore', 'videasy', 'vidfast']);
-      expect(pack.infos.first.name, 'VixSrc');
+          ['hdhub', 'notorrent', 'vidcore', 'videasy', 'vidfast']);
+      expect(pack.infos.first.name, 'VidLink');
     });
 
     test('audio is multi or english, bad values are reported', () {

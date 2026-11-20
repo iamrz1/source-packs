@@ -3,7 +3,7 @@
   "name": "MovieBox",
   "requires": 4,
   "description": "MP4 files in several qualities, English audio with subtitles, plus the Hindi dub when the title has one",
-  "rank": 70,
+  "rank": 80,
   "credits": [
     {
       "author": "faisaljs",

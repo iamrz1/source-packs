@@ -4,6 +4,7 @@
   "requires": 4,
   "description": "HLS and MP4 from several servers, with Hindi, Tamil, Telugu and other audio labelled by the site's own language list",
   "rank": 30,
+  "audio": "multi",
   "credits": [
     {
       "author": "hvtrs",

@@ -3,7 +3,9 @@
   "name": "HdHub",
   "requires": 4,
   "description": "Hindi dual-audio MKV files from the public HdHub addon, kept only when the file says Hindi",
-  "rank": 130,
+  "rank": 100,
+  "defaultEnabled": false,
+  "audio": "multi",
   "credits": [
     {
       "author": "TheVolecitor",
